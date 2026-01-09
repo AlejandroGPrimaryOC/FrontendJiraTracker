@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Jira Deployment Tracker Frontend
 
 # Stage 1: Build the application
-FROM node:18-alpine AS builder
+FROM node:20-slim AS builder
 
 # Set working directory
 WORKDIR /app
@@ -10,12 +10,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production=false
+RUN npm ci --prefer-offline --no-audit
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application  
 RUN npm run build
 
 # Stage 2: Serve the application with nginx
