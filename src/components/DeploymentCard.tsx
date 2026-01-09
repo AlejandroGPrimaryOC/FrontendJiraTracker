@@ -1,5 +1,5 @@
 import { Calendar, User, Package, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import type { Deployment } from '../lib/supabase';
+import type { Deployment } from '../lib/api';
 
 interface DeploymentCardProps {
   deployment: Deployment;

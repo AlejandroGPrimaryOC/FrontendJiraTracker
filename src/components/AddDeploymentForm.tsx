@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/api';
 
 interface AddDeploymentFormProps {
   onSuccess: () => void;
@@ -32,7 +32,7 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
     try {
       const stage = getStageFromVersion(formData.version);
 
-      const { error } = await supabase.from('deployments').insert({
+      await apiClient.createDeployment({
         ticket_id: formData.ticket_id,
         version: formData.version,
         stage,
@@ -41,8 +41,6 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
         release_date: formData.release_date,
         status: formData.status,
       });
-
-      if (error) throw error;
 
       setFormData({
         ticket_id: '',
@@ -166,7 +164,7 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
             </label>
             <select
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'in-progress' | 'failed' | 'rolled-back' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="active">Active</option>

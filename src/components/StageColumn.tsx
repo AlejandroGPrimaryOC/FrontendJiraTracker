@@ -1,5 +1,5 @@
 import { Code, TestTube, CheckSquare } from 'lucide-react';
-import type { Deployment } from '../lib/supabase';
+import type { Deployment } from '../lib/api';
 import { DeploymentCard } from './DeploymentCard';
 
 interface StageColumnProps {
