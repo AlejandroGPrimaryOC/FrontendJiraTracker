@@ -34,6 +34,9 @@ include:
             echo "🚀 Deploying component $SERVICE_NAME $ARTIFACT_VERSION_FULL to DEV... Done!"
     environment:
         name: ${ENV_NAME}
-        url: ${ENV_URL}
+        url: ${ENV_URL}        
     needs:
         - job: "🐋 docker_build"
+    rules:
+        - if: $CI_COMMIT_TAG = $CI_PIPELINE_SOURCE != "merge_request_event"
+          when: on_success
