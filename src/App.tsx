@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Activity, Filter, Users } from 'lucide-react';
-import { supabase, type Deployment } from './lib/supabase';
+import { apiClient, type Deployment } from './lib/api';
 import { StageColumn } from './components/StageColumn';
 import { SearchBar } from './components/SearchBar';
 import { AddDeploymentForm } from './components/AddDeploymentForm';
@@ -19,20 +19,12 @@ function App() {
   const fetchDeployments = useCallback(async (pageNum: number, append: boolean = false) => {
     try {
       setIsLoading(true);
-      const from = (pageNum - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
 
-      const { data, error } = await supabase
-        .from('deployments')
-        .select('*')
-        .order('release_date', { ascending: false })
-        .range(from, to);
+      const response = await apiClient.getDeployments(pageNum, ITEMS_PER_PAGE);
 
-      if (error) throw error;
-
-      if (data) {
-        setDeployments(prev => append ? [...prev, ...data] : data);
-        setHasMore(data.length === ITEMS_PER_PAGE);
+      if (response.data) {
+        setDeployments(prev => append ? [...prev, ...response.data] : response.data);
+        setHasMore(response.has_more);
       }
     } catch (error) {
       console.error('Error fetching deployments:', error);
@@ -65,7 +57,7 @@ function App() {
     setFilteredDeployments(filtered);
   }, [deployments, searchQuery, selectedOwner]);
 
-  const loadMore = (stage: 'develop' | 'testing' | 'uat') => {
+  const loadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
     fetchDeployments(nextPage, true);
@@ -144,21 +136,21 @@ function App() {
           <StageColumn
             stage="develop"
             deployments={developDeployments}
-            onLoadMore={() => loadMore('develop')}
+            onLoadMore={loadMore}
             hasMore={hasMore}
             isLoading={isLoading}
           />
           <StageColumn
             stage="testing"
             deployments={testingDeployments}
-            onLoadMore={() => loadMore('testing')}
+            onLoadMore={loadMore}
             hasMore={hasMore}
             isLoading={isLoading}
           />
           <StageColumn
             stage="uat"
             deployments={uatDeployments}
-            onLoadMore={() => loadMore('uat')}
+            onLoadMore={loadMore}
             hasMore={hasMore}
             isLoading={isLoading}
           />
