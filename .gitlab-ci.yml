@@ -1,3 +1,5 @@
+include:
+    - component: gitlab.primary/cicd/components/containers/docker@0.5.0-1
 #
 #variables:
 #    DOCKER_BUILDKIT: "1"
