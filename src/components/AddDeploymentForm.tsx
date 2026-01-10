@@ -1,0 +1,199 @@
+import { useState } from 'react';
+import { Plus, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+
+interface AddDeploymentFormProps {
+  onSuccess: () => void;
+}
+
+export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    ticket_id: '',
+    version: '',
+    description: '',
+    owner: '',
+    release_date: new Date().toISOString().split('T')[0],
+    status: 'active' as const,
+  });
+
+  const getStageFromVersion = (version: string): 'develop' | 'testing' | 'uat' => {
+    if (version.includes('alpha')) return 'develop';
+    if (version.includes('beta')) return 'testing';
+    if (version.includes('rc')) return 'uat';
+    return 'develop';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const stage = getStageFromVersion(formData.version);
+
+      const { error } = await supabase.from('deployments').insert({
+        ticket_id: formData.ticket_id,
+        version: formData.version,
+        stage,
+        description: formData.description,
+        owner: formData.owner,
+        release_date: formData.release_date,
+        status: formData.status,
+      });
+
+      if (error) throw error;
+
+      setFormData({
+        ticket_id: '',
+        version: '',
+        description: '',
+        owner: '',
+        release_date: new Date().toISOString().split('T')[0],
+        status: 'active',
+      });
+      setIsOpen(false);
+      onSuccess();
+    } catch (error) {
+      console.error('Error adding deployment:', error);
+      alert('Failed to add deployment');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) {
+    return (
+      <button
+        onClick={() => setIsOpen(true)}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+      >
+        <Plus className="w-5 h-5" />
+        Add Deployment
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-xl font-bold">Add New Deployment</h2>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ticket ID *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.ticket_id}
+              onChange={(e) => setFormData({ ...formData, ticket_id: e.target.value })}
+              placeholder="e.g., PROJ-123"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Version *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.version}
+              onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+              placeholder="e.g., 1.2.3-alpha.1, 2.0.0-beta.2, 1.5.0-rc.1"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Use 'alpha' for Develop, 'beta' for Testing, 'rc' for UAT
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description *
+            </label>
+            <textarea
+              required
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Brief description of the deployment"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Owner *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.owner}
+              onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
+              placeholder="e.g., John Doe"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Release Date *
+            </label>
+            <input
+              type="date"
+              required
+              value={formData.release_date}
+              onChange={(e) => setFormData({ ...formData, release_date: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="active">Active</option>
+              <option value="in-progress">In Progress</option>
+              <option value="failed">Failed</option>
+              <option value="rolled-back">Rolled Back</option>
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? 'Adding...' : 'Add Deployment'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
