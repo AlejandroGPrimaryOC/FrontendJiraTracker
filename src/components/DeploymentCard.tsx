@@ -6,10 +6,10 @@ interface DeploymentCardProps {
 }
 
 const statusConfig = {
-  active: { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', label: 'Active' },
-  'in-progress': { icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50', label: 'In Progress' },
-  failed: { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', label: 'Failed' },
-  'rolled-back': { icon: AlertCircle, color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'Rolled Back' },
+  activo: { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', label: 'Activo' },
+  'en curso': { icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50', label: 'En Curso' },
+  'ready to qa': { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', label: 'Ready to QA' },
+  finalizado: { icon: AlertCircle, color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'Finalizado' },
 };
 
 export function DeploymentCard({ deployment }: DeploymentCardProps) {
@@ -19,11 +19,11 @@ export function DeploymentCard({ deployment }: DeploymentCardProps) {
   const diffTime = Math.abs(now.getTime() - releaseDate.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  const timeAgo = diffDays === 0 ? 'Today' :
-                  diffDays === 1 ? 'Yesterday' :
-                  diffDays < 7 ? `${diffDays} days ago` :
-                  diffDays < 30 ? `${Math.floor(diffDays / 7)} weeks ago` :
-                  `${Math.floor(diffDays / 30)} months ago`;
+  const timeAgo = diffDays === 0 ? 'Hoy' :
+                  diffDays === 1 ? 'Ayer' :
+                  diffDays < 7 ? `${diffDays} días atrás` :
+                  diffDays < 30 ? `${Math.floor(diffDays / 7)} semanas atrás` :
+                  `${Math.floor(diffDays / 30)} meses atrás`;
 
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-4 border border-gray-200">

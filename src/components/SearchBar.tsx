@@ -14,7 +14,7 @@ export function SearchBar({ value, onChange, onClear }: SearchBarProps) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search by ticket ID, description, owner, or version..."
+        placeholder="Buscar por ticket ID, descripción, autor, o versión..."
         className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
       {value && (

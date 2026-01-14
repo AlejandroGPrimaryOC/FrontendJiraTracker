@@ -85,8 +85,8 @@ function App() {
             <div className="flex items-center gap-3">
               <Activity className="w-8 h-8 text-blue-600" />
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Jira Wallboard</h1>
-                <p className="text-sm text-gray-600">Deployment Status Dashboard</p>
+                <h1 className="text-3xl font-bold text-gray-900">Tickets Jira</h1>
+                <p className="text-sm text-gray-600">Estado de tickets One-Clearing</p>
               </div>
             </div>
             <AddDeploymentForm onSuccess={handleDeploymentAdded} />
@@ -109,7 +109,7 @@ function App() {
                   onChange={(e) => setSelectedOwner(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="all">All Owners</option>
+                  <option value="all">Todos los propietarios</option>
                   {uniqueOwners.map(owner => (
                     <option key={owner} value={owner}>{owner}</option>
                   ))}
@@ -121,11 +121,11 @@ function App() {
           <div className="mt-4 flex gap-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-gray-600">Total Deployments: <strong>{totalDeployments}</strong></span>
+              <span className="text-gray-600">Deploys totales: <strong>{totalDeployments}</strong></span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-600">Unique Tickets: <strong>{uniqueTickets}</strong></span>
+              <span className="text-gray-600">Tickets Únicos: <strong>{uniqueTickets}</strong></span>
             </div>
           </div>
         </div>
@@ -134,7 +134,7 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-280px)]">
           <StageColumn
-            stage="develop"
+            stage="dev"
             deployments={developDeployments}
             onLoadMore={loadMore}
             hasMore={hasMore}

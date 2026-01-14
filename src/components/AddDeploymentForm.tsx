@@ -15,14 +15,14 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
     description: '',
     owner: '',
     release_date: new Date().toISOString().split('T')[0],
-    status: 'active' as const,
+    status: 'activo' as const,
   });
 
-  const getStageFromVersion = (version: string): 'develop' | 'testing' | 'uat' => {
-    if (version.includes('alpha')) return 'develop';
+  const getStageFromVersion = (version: string): 'dev' | 'testing' | 'uat' => {
+    if (version.includes('alpha')) return 'dev';
     if (version.includes('beta')) return 'testing';
     if (version.includes('rc')) return 'uat';
-    return 'develop';
+    return 'dev';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,13 +48,13 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
         description: '',
         owner: '',
         release_date: new Date().toISOString().split('T')[0],
-        status: 'active',
+        status: 'activo',
       });
       setIsOpen(false);
       onSuccess();
     } catch (error) {
-      console.error('Error adding deployment:', error);
-      alert('Failed to add deployment');
+      console.error('Error al agregar deploy:', error);
+      alert('Error al agregar deploy');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,7 +67,7 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
       >
         <Plus className="w-5 h-5" />
-        Add Deployment
+        Agregar Deploy
       </button>
     );
   }
@@ -76,7 +76,7 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold">Add New Deployment</h2>
+          <h2 className="text-xl font-bold">Agregar Nuevo Deploy</h2>
           <button
             onClick={() => setIsOpen(false)}
             className="text-gray-500 hover:text-gray-700"
@@ -95,7 +95,7 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
               required
               value={formData.ticket_id}
               onChange={(e) => setFormData({ ...formData, ticket_id: e.target.value })}
-              placeholder="e.g., PROJ-123"
+              placeholder="e.j., PROJ-123"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -113,19 +113,19 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Use 'alpha' for Develop, 'beta' for Testing, 'rc' for UAT
+              Usar 'alpha' para Develop, 'beta' para Testing, 'rc' para UAT
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description *
+              Descripción *
             </label>
             <textarea
               required
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Brief description of the deployment"
+              placeholder="Breve descripción del deploy"
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -140,14 +140,14 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
               required
               value={formData.owner}
               onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
-              placeholder="e.g., John Doe"
+              placeholder="e.j., pepito"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Release Date *
+              Fecha *
             </label>
             <input
               type="date"
@@ -160,17 +160,17 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
+              Estado
             </label>
             <select
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'in-progress' | 'failed' | 'rolled-back' })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as 'activo' | 'en curso' | 'ready to qa' | 'finalizado' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="active">Active</option>
-              <option value="in-progress">In Progress</option>
-              <option value="failed">Failed</option>
-              <option value="rolled-back">Rolled Back</option>
+              <option value="activo">Activo</option>
+              <option value="en curso">En Curso</option>
+              <option value="ready to qa">Ready to QA</option>
+              <option value="finalizado">Finalizado</option>
             </select>
           </div>
 
@@ -180,14 +180,14 @@ export function AddDeploymentForm({ onSuccess }: AddDeploymentFormProps) {
               onClick={() => setIsOpen(false)}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              {isSubmitting ? 'Adding...' : 'Add Deployment'}
+              {isSubmitting ? 'Agregando...' : 'Agregar Deploy'}
             </button>
           </div>
         </form>

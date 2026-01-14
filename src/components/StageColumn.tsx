@@ -3,7 +3,7 @@ import type { Deployment } from '../lib/api';
 import { DeploymentCard } from './DeploymentCard';
 
 interface StageColumnProps {
-  stage: 'develop' | 'testing' | 'uat';
+  stage: 'dev' | 'testing' | 'uat';
   deployments: Deployment[];
   onLoadMore: () => void;
   hasMore: boolean;
@@ -12,7 +12,7 @@ interface StageColumnProps {
 
 const stageConfig = {
   develop: {
-    title: 'Development',
+    title: 'Dev',
     icon: Code,
     color: 'bg-blue-500',
     borderColor: 'border-blue-500',
@@ -65,7 +65,7 @@ export function StageColumn({ stage, deployments, onLoadMore, hasMore, isLoading
       <div className="flex-1 bg-gray-50 p-4 space-y-4 overflow-y-auto">
         {uniqueTickets.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
-            No deployments in this stage
+            Sin deploys en este ambiente.
           </div>
         ) : (
           <>
@@ -77,7 +77,7 @@ export function StageColumn({ stage, deployments, onLoadMore, hasMore, isLoading
                   {versions.length > 1 && (
                     <div className="mt-2 ml-4 pl-4 border-l-2 border-gray-300 space-y-1">
                       <p className="text-xs font-semibold text-gray-600 mb-2">
-                        Previous versions ({versions.length - 1}):
+                        Versiones previas ({versions.length - 1}):
                       </p>
                       {versions.slice(1).map((v) => (
                         <div key={v.id} className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
@@ -99,7 +99,7 @@ export function StageColumn({ stage, deployments, onLoadMore, hasMore, isLoading
                 disabled={isLoading}
                 className="w-full py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Loading...' : 'Load More'}
+                {isLoading ? 'Cargando...' : 'Cargar más'}
               </button>
             )}
           </>

@@ -1,7 +1,3 @@
-/**
- * API Service for Deployment Management
- * This module handles all HTTP API calls to the backend server
- */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -9,11 +5,11 @@ export type Deployment = {
   id: string;
   ticket_id: string;
   version: string;
-  stage: 'develop' | 'testing' | 'uat';
+  stage: 'dev' | 'testing' | 'uat';
   release_date: string;
   description: string;
   owner: string;
-  status: 'active' | 'in-progress' | 'failed' | 'rolled-back';
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';
   created_at: string;
   updated_at: string;
 };
@@ -25,7 +21,7 @@ export type CreateDeploymentDTO = {
   description: string;
   owner: string;
   release_date: string;
-  status: 'active' | 'in-progress' | 'failed' | 'rolled-back';
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';
 };
 
 export type PaginatedResponse<T> = {
@@ -36,9 +32,6 @@ export type PaginatedResponse<T> = {
   has_more: boolean;
 };
 
-/**
- * API Client for making HTTP requests
- */
 class ApiClient {
   private baseUrl: string;
 
@@ -46,9 +39,6 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  /**
-   * Generic fetch wrapper with error handling
-   */
   private async fetch<T>(
     endpoint: string,
     options?: RequestInit
@@ -67,7 +57,7 @@ class ApiClient {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
+          errorData.message || `HTTP error! ${response.status}`
         );
       }
 
@@ -76,7 +66,7 @@ class ApiClient {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('An unexpected error occurred');
+      throw new Error('Error inesperado al realizar la solicitud');
     }
   }
 
