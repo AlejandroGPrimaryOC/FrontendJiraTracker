@@ -3,7 +3,6 @@ import { Activity, Filter, Users } from 'lucide-react';
 import { apiClient, type Deployment } from './lib/api';
 import { StageColumn } from './components/StageColumn';
 import { SearchBar } from './components/SearchBar';
-import { AddDeploymentForm } from './components/AddDeploymentForm';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -70,7 +69,7 @@ function App() {
 
   const uniqueOwners = Array.from(new Set(deployments.map(d => d.owner))).sort();
 
-  const developDeployments = filteredDeployments.filter(d => d.stage === 'develop');
+  const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
   const testingDeployments = filteredDeployments.filter(d => d.stage === 'testing');
   const uatDeployments = filteredDeployments.filter(d => d.stage === 'uat');
 
@@ -89,7 +88,6 @@ function App() {
                 <p className="text-sm text-gray-600">Estado de tickets One-Clearing</p>
               </div>
             </div>
-            <AddDeploymentForm onSuccess={handleDeploymentAdded} />
           </div>
 
           <div className="flex flex-col lg:flex-row gap-4">

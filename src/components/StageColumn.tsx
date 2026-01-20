@@ -11,20 +11,20 @@ interface StageColumnProps {
 }
 
 const stageConfig = {
-  develop: {
-    title: 'Dev',
+  dev: {
+    title: 'dev',
     icon: Code,
     color: 'bg-blue-500',
     borderColor: 'border-blue-500',
   },
   testing: {
-    title: 'Testing',
+    title: 'testing',
     icon: TestTube,
     color: 'bg-purple-500',
     borderColor: 'border-purple-500',
   },
   uat: {
-    title: 'UAT',
+    title: 'uat',
     icon: CheckSquare,
     color: 'bg-green-500',
     borderColor: 'border-green-500',
