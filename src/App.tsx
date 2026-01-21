@@ -62,11 +62,6 @@ function App() {
     fetchDeployments(nextPage, true);
   };
 
-  const handleDeploymentAdded = () => {
-    setPage(1);
-    fetchDeployments(1);
-  };
-
   const uniqueOwners = Array.from(new Set(deployments.map(d => d.owner))).sort();
 
   const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');

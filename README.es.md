@@ -286,13 +286,22 @@ FrontendJiraTracker/
 
 ## 🔌 Integración con API
 
-Esta aplicación requiere una API backend. Ver [API_DOCUMENTATION.es.md](./API_DOCUMENTATION.es.md) para:
+Esta aplicación requiere una API backend. Ver documentación:
 
-- Especificaciones completas de endpoints de API
-- Objetos de Transferencia de Datos (DTOs)
-- Esquema de base de datos
-- Ejemplos de implementación
-- Instrucciones de prueba
+- **[BACKEND_INTEGRATION_GUIDE.md](./BACKEND_INTEGRATION_GUIDE.md)** - Guía rápida para desarrolladores backend (Español) 🚀
+- **[API_DOCUMENTATION.es.md](./API_DOCUMENTATION.es.md)** - Especificación completa de API (Español)
+- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - Especificación completa de API (Inglés)
+
+### Puntos Clave para el Equipo Backend
+
+El backend debe implementar 5 endpoints RESTful que devuelvan datos JSON. Los aspectos más críticos son:
+
+1. **Valores de stage**: Deben ser exactamente `'dev'`, `'testing'`, o `'uat'`
+2. **Valores de status**: Deben ser exactamente `'activo'`, `'en curso'`, `'ready to qa'`, o `'finalizado'` (en español)
+3. **Paginación**: Implementar paginación adecuada con el campo `has_more`
+4. **CORS**: Habilitar CORS para el origen del frontend
+
+Ver la [Guía de Integración Backend](./BACKEND_INTEGRATION_GUIDE.md) para una guía completa de inicio rápido.
 
 ### Inicio Rápido con API
 
