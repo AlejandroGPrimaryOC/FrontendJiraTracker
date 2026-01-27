@@ -28,11 +28,11 @@ interface Deployment {
   id: string;                    // Identificador único (se recomienda UUID)
   ticket_id: string;             // ID del ticket de Jira (ej., "PROJ-123")
   version: string;               // Cadena de versión (ej., "1.2.3-alpha.1")
-  stage: 'develop' | 'testing' | 'uat';  // Etapa de despliegue
+  stage: 'dev' | 'testing' | 'uat';  // Etapa de despliegue
   release_date: string;          // Cadena de fecha ISO 8601 (ej., "2024-01-15")
   description: string;           // Descripción del despliegue
   owner: string;                 // Nombre del propietario (ej., "John Doe")
-  status: 'active' | 'in-progress' | 'failed' | 'rolled-back';  // Estado del despliegue
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  // Estado del despliegue (Español)
   created_at: string;            // Timestamp ISO 8601 (generado automáticamente)
   updated_at: string;            // Timestamp ISO 8601 (generado automáticamente)
 }
@@ -46,11 +46,11 @@ Se usa al crear un nuevo despliegue.
 interface CreateDeploymentDTO {
   ticket_id: string;             // Requerido
   version: string;               // Requerido
-  stage: 'develop' | 'testing' | 'uat';  // Requerido
+  stage: 'dev' | 'testing' | 'uat';  // Requerido
   description: string;           // Requerido
   owner: string;                 // Requerido
   release_date: string;          // Requerido - Cadena de fecha ISO 8601
-  status: 'active' | 'in-progress' | 'failed' | 'rolled-back';  // Requerido
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  // Requerido (Español)
 }
 ```
 
@@ -62,11 +62,11 @@ Se usa al actualizar un despliegue existente (todos los campos opcionales).
 interface UpdateDeploymentDTO {
   ticket_id?: string;
   version?: string;
-  stage?: 'develop' | 'testing' | 'uat';
+  stage?: 'dev' | 'testing' | 'uat';
   description?: string;
   owner?: string;
   release_date?: string;
-  status?: 'active' | 'in-progress' | 'failed' | 'rolled-back';
+  status?: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';
 }
 ```
 
@@ -111,7 +111,7 @@ Recupera una lista paginada de despliegues.
       "release_date": "2024-01-15",
       "description": "Se agregó nueva función de autenticación",
       "owner": "John Doe",
-      "status": "active",
+      "status": "activo",
       "created_at": "2024-01-15T10:30:00Z",
       "updated_at": "2024-01-15T10:30:00Z"
     }
@@ -149,7 +149,7 @@ Recupera un despliegue específico por ID.
   "release_date": "2024-01-15",
   "description": "Se agregó nueva función de autenticación",
   "owner": "John Doe",
-  "status": "active",
+  "status": "activo",
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T10:30:00Z"
 }
@@ -177,7 +177,7 @@ Crea un nuevo despliegue.
   "description": "Se agregó nueva función de autenticación",
   "owner": "John Doe",
   "release_date": "2024-01-15",
-  "status": "active"
+  "status": "activo"
 }
 ```
 
@@ -192,7 +192,7 @@ Crea un nuevo despliegue.
   "release_date": "2024-01-15",
   "description": "Se agregó nueva función de autenticación",
   "owner": "John Doe",
-  "status": "active",
+  "status": "activo",
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T10:30:00Z"
 }
@@ -217,7 +217,7 @@ Actualiza un despliegue existente.
 
 ```json
 {
-  "status": "in-progress",
+  "status": "en curso",
   "description": "Descripción actualizada"
 }
 ```
@@ -233,7 +233,7 @@ Actualiza un despliegue existente.
   "release_date": "2024-01-15",
   "description": "Descripción actualizada",
   "owner": "John Doe",
-  "status": "in-progress",
+  "status": "en curso",
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T14:20:00Z"
 }
@@ -272,11 +272,11 @@ CREATE TABLE deployments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ticket_id VARCHAR(255) NOT NULL,
   version VARCHAR(255) NOT NULL,
-  stage VARCHAR(50) NOT NULL CHECK (stage IN ('develop', 'testing', 'uat')),
+  stage VARCHAR(50) NOT NULL CHECK (stage IN ('dev', 'testing', 'uat')),
   release_date DATE NOT NULL,
   description TEXT NOT NULL,
   owner VARCHAR(255) NOT NULL,
-  status VARCHAR(50) NOT NULL CHECK (status IN ('active', 'in-progress', 'failed', 'rolled-back')),
+  status VARCHAR(50) NOT NULL CHECK (status IN ('activo', 'en curso', 'ready to qa', 'finalizado')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -344,7 +344,7 @@ Implementa las siguientes reglas de validación:
 
 - `stage`:
   - Requerido
-  - Enum: 'develop', 'testing', 'uat'
+  - Enum: 'dev', 'testing', 'uat'
 
 - `description`:
   - Requerido
@@ -362,7 +362,8 @@ Implementa las siguientes reglas de validación:
 
 - `status`:
   - Requerido
-  - Enum: 'active', 'in-progress', 'failed', 'rolled-back'
+  - Enum: 'activo', 'en curso', 'ready to qa', 'finalizado'
+  - Nota: Estos valores están en español y deben mantenerse exactamente como se especifica
 
 ### Configuración de CORS
 
@@ -410,13 +411,13 @@ curl -X POST "http://localhost:3000/api/deployments" \
     "description": "Despliegue de prueba",
     "owner": "John Doe",
     "release_date": "2024-01-15",
-    "status": "active"
+    "status": "activo"
   }'
 
 # Actualizar despliegue
 curl -X PATCH "http://localhost:3000/api/deployments/550e8400-e29b-41d4-a716-446655440000" \
   -H "Content-Type: application/json" \
-  -d '{"status": "in-progress"}'
+  -d '{"status": "en curso"}'
 
 # Eliminar despliegue
 curl -X DELETE "http://localhost:3000/api/deployments/550e8400-e29b-41d4-a716-446655440000"

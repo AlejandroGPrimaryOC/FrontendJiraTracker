@@ -1,27 +1,35 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
+/**
+ * Deployment object returned from the API
+ * Represents a ticket deployment in one of the three stages
+ */
 export type Deployment = {
-  id: string;
-  ticket_id: string;
-  version: string;
-  stage: 'dev' | 'testing' | 'uat';
-  release_date: string;
-  description: string;
-  owner: string;
-  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';
-  created_at: string;
-  updated_at: string;
+  id: string;                    // Unique identifier (UUID)
+  ticket_id: string;             // Jira ticket ID (e.g., "PROJ-123")
+  version: string;               // Version string (e.g., "1.2.3-alpha.1")
+  stage: 'dev' | 'testing' | 'uat';  // Deployment stage
+  release_date: string;          // ISO 8601 date string
+  description: string;           // Deployment description
+  owner: string;                 // Owner name
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  // Deployment status
+  created_at: string;            // ISO 8601 timestamp (auto-generated)
+  updated_at: string;            // ISO 8601 timestamp (auto-generated)
 };
 
+/**
+ * Data Transfer Object for creating a new deployment
+ * All fields are required
+ */
 export type CreateDeploymentDTO = {
-  ticket_id: string;
-  version: string;
-  stage: 'develop' | 'testing' | 'uat';
-  description: string;
-  owner: string;
-  release_date: string;
-  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';
+  ticket_id: string;             // Jira ticket ID (required)
+  version: string;               // Version string (required)
+  stage: 'dev' | 'testing' | 'uat';  // Deployment stage (required)
+  description: string;           // Deployment description (required)
+  owner: string;                 // Owner name (required)
+  release_date: string;          // ISO 8601 date string (required)
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  // Deployment status (required)
 };
 
 export type PaginatedResponse<T> = {

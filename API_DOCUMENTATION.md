@@ -28,11 +28,11 @@ interface Deployment {
   id: string;                    // Unique identifier (UUID recommended)
   ticket_id: string;             // Jira ticket ID (e.g., "PROJ-123")
   version: string;               // Version string (e.g., "1.2.3-alpha.1")
-  stage: 'develop' | 'testing' | 'uat';  // Deployment stage
+  stage: 'dev' | 'testing' | 'uat';  // Deployment stage
   release_date: string;          // ISO 8601 date string (e.g., "2024-01-15")
   description: string;           // Deployment description
   owner: string;                 // Owner name (e.g., "John Doe")
-  status: 'active' | 'in-progress' | 'failed' | 'rolled-back';  // Deployment status
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  // Deployment status (Spanish)
   created_at: string;            // ISO 8601 timestamp (auto-generated)
   updated_at: string;            // ISO 8601 timestamp (auto-generated)
 }
@@ -46,11 +46,11 @@ Used when creating a new deployment.
 interface CreateDeploymentDTO {
   ticket_id: string;             // Required
   version: string;               // Required
-  stage: 'develop' | 'testing' | 'uat';  // Required
+  stage: 'dev' | 'testing' | 'uat';  // Required
   description: string;           // Required
   owner: string;                 // Required
   release_date: string;          // Required - ISO 8601 date string
-  status: 'active' | 'in-progress' | 'failed' | 'rolled-back';  // Required
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  // Required (Spanish)
 }
 ```
 
@@ -62,11 +62,11 @@ Used when updating an existing deployment (all fields optional).
 interface UpdateDeploymentDTO {
   ticket_id?: string;
   version?: string;
-  stage?: 'develop' | 'testing' | 'uat';
+  stage?: 'dev' | 'testing' | 'uat';
   description?: string;
   owner?: string;
   release_date?: string;
-  status?: 'active' | 'in-progress' | 'failed' | 'rolled-back';
+  status?: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';
 }
 ```
 
@@ -107,11 +107,11 @@ Retrieve a paginated list of deployments.
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "ticket_id": "PROJ-123",
       "version": "1.2.3-alpha.1",
-      "stage": "develop",
+      "stage": "dev",
       "release_date": "2024-01-15",
       "description": "Added new authentication feature",
       "owner": "John Doe",
-      "status": "active",
+      "status": "activo",
       "created_at": "2024-01-15T10:30:00Z",
       "updated_at": "2024-01-15T10:30:00Z"
     }
@@ -145,11 +145,11 @@ Retrieve a specific deployment by ID.
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "ticket_id": "PROJ-123",
   "version": "1.2.3-alpha.1",
-  "stage": "develop",
+  "stage": "dev",
   "release_date": "2024-01-15",
   "description": "Added new authentication feature",
   "owner": "John Doe",
-  "status": "active",
+  "status": "activo",
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T10:30:00Z"
 }
@@ -173,11 +173,11 @@ Create a new deployment.
 {
   "ticket_id": "PROJ-123",
   "version": "1.2.3-alpha.1",
-  "stage": "develop",
+  "stage": "dev",
   "description": "Added new authentication feature",
   "owner": "John Doe",
   "release_date": "2024-01-15",
-  "status": "active"
+  "status": "activo"
 }
 ```
 
@@ -188,11 +188,11 @@ Create a new deployment.
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "ticket_id": "PROJ-123",
   "version": "1.2.3-alpha.1",
-  "stage": "develop",
+  "stage": "dev",
   "release_date": "2024-01-15",
   "description": "Added new authentication feature",
   "owner": "John Doe",
-  "status": "active",
+  "status": "activo",
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T10:30:00Z"
 }
@@ -217,7 +217,7 @@ Update an existing deployment.
 
 ```json
 {
-  "status": "in-progress",
+  "status": "en curso",
   "description": "Updated description"
 }
 ```
@@ -229,11 +229,11 @@ Update an existing deployment.
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "ticket_id": "PROJ-123",
   "version": "1.2.3-alpha.1",
-  "stage": "develop",
+  "stage": "dev",
   "release_date": "2024-01-15",
   "description": "Updated description",
   "owner": "John Doe",
-  "status": "in-progress",
+  "status": "en curso",
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T14:20:00Z"
 }
@@ -272,11 +272,11 @@ CREATE TABLE deployments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ticket_id VARCHAR(255) NOT NULL,
   version VARCHAR(255) NOT NULL,
-  stage VARCHAR(50) NOT NULL CHECK (stage IN ('develop', 'testing', 'uat')),
+  stage VARCHAR(50) NOT NULL CHECK (stage IN ('dev', 'testing', 'uat')),
   release_date DATE NOT NULL,
   description TEXT NOT NULL,
   owner VARCHAR(255) NOT NULL,
-  status VARCHAR(50) NOT NULL CHECK (status IN ('active', 'in-progress', 'failed', 'rolled-back')),
+  status VARCHAR(50) NOT NULL CHECK (status IN ('activo', 'en curso', 'ready to qa', 'finalizado')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -344,7 +344,7 @@ Implement the following validation rules:
 
 - `stage`:
   - Required
-  - Enum: 'develop', 'testing', 'uat'
+  - Enum: 'dev', 'testing', 'uat'
 
 - `description`:
   - Required
@@ -362,7 +362,8 @@ Implement the following validation rules:
 
 - `status`:
   - Required
-  - Enum: 'active', 'in-progress', 'failed', 'rolled-back'
+  - Enum: 'activo', 'en curso', 'ready to qa', 'finalizado'
+  - Note: These are Spanish status labels
 
 ### CORS Configuration
 
@@ -406,17 +407,17 @@ curl -X POST "http://localhost:3000/api/deployments" \
   -d '{
     "ticket_id": "PROJ-123",
     "version": "1.2.3-alpha.1",
-    "stage": "develop",
+    "stage": "dev",
     "description": "Test deployment",
     "owner": "John Doe",
     "release_date": "2024-01-15",
-    "status": "active"
+    "status": "activo"
   }'
 
 # Update deployment
 curl -X PATCH "http://localhost:3000/api/deployments/550e8400-e29b-41d4-a716-446655440000" \
   -H "Content-Type: application/json" \
-  -d '{"status": "in-progress"}'
+  -d '{"status": "en curso"}'
 
 # Delete deployment
 curl -X DELETE "http://localhost:3000/api/deployments/550e8400-e29b-41d4-a716-446655440000"
