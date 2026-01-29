@@ -4,65 +4,64 @@ import { apiClient, type Deployment } from './lib/api';
 import { StageColumn } from './components/StageColumn';
 import { SearchBar } from './components/SearchBar';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 100;
 
 function App() {
+    const [isStreaming, setIsStreaming] = useState(false);
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [filteredDeployments, setFilteredDeployments] = useState<Deployment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOwner, setSelectedOwner] = useState<string>('all');
+  const [selectedVersion, setSelectedVersion] = useState<string>('1.0.7');
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchDeployments = useCallback(async (pageNum: number, append: boolean = false) => {
+  const fetchDeployments = useCallback(async (pageNum: number, append: boolean = false, version: string = selectedVersion) => {
+    setIsLoading(true);
+    setIsStreaming(true);
+    if (!append) setDeployments([]); // Limpiar si no es append
     try {
-      setIsLoading(true);
-
-      const response = await apiClient.getDeployments(pageNum, ITEMS_PER_PAGE);
-
-      if (response.data) {
-        setDeployments(prev => append ? [...prev, ...response.data] : response.data);
-        setHasMore(response.has_more);
-      }
+      await apiClient.getDeploymentsStream(
+        pageNum,
+        ITEMS_PER_PAGE,
+        version,
+        (deployment) => {
+          setDeployments(prev => [...prev, deployment]);
+        }
+      );
     } catch (error) {
       console.error('Error fetching deployments:', error);
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
     }
-  }, []);
+  }, [selectedVersion]);
 
   useEffect(() => {
-    fetchDeployments(1);
-  }, [fetchDeployments]);
+    fetchDeployments(1, false, selectedVersion);
+    setPage(1);
+  }, [fetchDeployments, selectedVersion]);
 
   useEffect(() => {
     let filtered = deployments;
-
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(d =>
-        d.ticket_id.toLowerCase().includes(query) ||
-        d.description.toLowerCase().includes(query) ||
-        d.owner.toLowerCase().includes(query) ||
-        d.version.toLowerCase().includes(query)
+        (d.ticket_id && d.ticket_id.toLowerCase().includes(query)) ||
+        (d.description && d.description.toLowerCase().includes(query)) ||
+        (d.owner && d.owner.toLowerCase().includes(query)) ||
+        (d.developer && d.developer.toLowerCase().includes(query)) ||
+        (d.version && d.version.toLowerCase().includes(query))
       );
     }
-
-    if (selectedOwner !== 'all') {
-      filtered = filtered.filter(d => d.owner === selectedOwner);
+    if (selectedVersion && selectedVersion !== '(todas)') {
+      filtered = filtered.filter(d => d.version && d.version.startsWith(selectedVersion));
     }
-
     setFilteredDeployments(filtered);
-  }, [deployments, searchQuery, selectedOwner]);
+  }, [deployments, searchQuery, selectedVersion]);
 
-  const loadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchDeployments(nextPage, true);
-  };
-
-  const uniqueOwners = Array.from(new Set(deployments.map(d => d.owner))).sort();
+  // Generar lista de versiones dinámicamente a partir de los deployments
+  const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7'];
 
   const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
   const testingDeployments = filteredDeployments.filter(d => d.stage === 'testing');
@@ -71,8 +70,40 @@ function App() {
   const totalDeployments = deployments.length;
   const uniqueTickets = new Set(deployments.map(d => d.ticket_id)).size;
 
+  // Carga automática de más páginas si hay más de 99, 198, 297...
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchDeployments(nextPage, true);
+  };
+
+  // Efecto para cargar más automáticamente si hay más de 99, 198, 297...
+  useEffect(() => {
+    if (hasMore && totalDeployments > 0 && totalDeployments % 99 === 0) {
+      loadMore();
+    }
+  }, [totalDeployments, hasMore]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
+      {/* Progress bar arriba */}
+      {isStreaming && (
+        <div className="fixed top-0 left-0 w-full h-1 z-50">
+          <div className="h-full bg-blue-500 animate-pulse transition-all duration-300" style={{ width: '100%' }} />
+        </div>
+      )}
+      {/* Overlay de loading solo si no hay datos */}
+      {isLoading && deployments.length === 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <svg className="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <span className="text-blue-700 font-semibold text-lg">Cargando datos...</span>
+          </div>
+        </div>
+      )}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -98,13 +129,12 @@ function App() {
               <div className="flex items-center gap-2">
                 <Filter className="w-5 h-5 text-gray-500" />
                 <select
-                  value={selectedOwner}
-                  onChange={(e) => setSelectedOwner(e.target.value)}
+                  value={selectedVersion}
+                  onChange={(e) => setSelectedVersion(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="all">Todos los propietarios</option>
-                  {uniqueOwners.map(owner => (
-                    <option key={owner} value={owner}>{owner}</option>
+                  {versionOptions.map(version => (
+                    <option key={version} value={version}>{version}</option>
                   ))}
                 </select>
               </div>
@@ -113,7 +143,7 @@ function App() {
 
           <div className="mt-4 flex gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <div className={`w-2 h-2 bg-blue-500 rounded-full${isStreaming ? ' animate-pulse' : ''}`}></div>
               <span className="text-gray-600">Deploys totales: <strong>{totalDeployments}</strong></span>
             </div>
             <div className="flex items-center gap-2">

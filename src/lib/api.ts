@@ -1,35 +1,28 @@
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
-/**
- * Deployment object returned from the API
- * Represents a ticket deployment in one of the three stages
- */
 export type Deployment = {
-  id: string;                    // Unique identifier (UUID)
+  id: string;                    
   ticket_id: string;             // Jira ticket ID (e.g., "PROJ-123")
-  version: string;               // Version string (e.g., "1.2.3-alpha.1")
-  stage: 'dev' | 'testing' | 'uat';  // Deployment stage
-  release_date: string;          // ISO 8601 date string
-  description: string;           // Deployment description
-  owner: string;                 // Owner name
-  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  // Deployment status
-  created_at: string;            // ISO 8601 timestamp (auto-generated)
-  updated_at: string;            // ISO 8601 timestamp (auto-generated)
+  version: string;               // Version (e.g., "1.2.3-alpha.1")
+  stage: 'dev' | 'testing' | 'uat';  // Stage
+  release_date: string;          
+  description: string;           
+  owner: string;            
+  developer: string;     
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado'; 
+  created_at: string;           
+  updated_at: string;           
 };
 
-/**
- * Data Transfer Object for creating a new deployment
- * All fields are required
- */
 export type CreateDeploymentDTO = {
-  ticket_id: string;             // Jira ticket ID (required)
-  version: string;               // Version string (required)
-  stage: 'dev' | 'testing' | 'uat';  // Deployment stage (required)
-  description: string;           // Deployment description (required)
-  owner: string;                 // Owner name (required)
-  release_date: string;          // ISO 8601 date string (required)
-  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  // Deployment status (required)
+  ticket_id: string;             
+  version: string;               
+  stage: 'dev' | 'testing' | 'uat';  
+  description: string;           
+  owner: string;                 
+  release_date: string;          
+  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  
 };
 
 export type PaginatedResponse<T> = {
@@ -79,69 +72,53 @@ class ApiClient {
   }
 
   /**
-   * Fetch deployments with pagination and sorting
-   * @param page - Page number (1-indexed)
-   * @param perPage - Number of items per page
-   * @returns Paginated deployment response
+   * Obtiene deployments usando stream JSONL. Llama a onDeployment por cada deployment recibido.
+   * Devuelve una promesa que resuelve cuando termina el stream.
    */
-  async getDeployments(
+  async getDeploymentsStream(
     page: number = 1,
-    perPage: number = 10
-  ): Promise<PaginatedResponse<Deployment>> {
-    return this.fetch<PaginatedResponse<Deployment>>(
-      `/deployments?page=${page}&per_page=${perPage}&sort=release_date&order=desc`
-    );
-  }
-
-  /**
-   * Create a new deployment
-   * @param deployment - Deployment data to create
-   * @returns Created deployment
-   */
-  async createDeployment(
-    deployment: CreateDeploymentDTO
-  ): Promise<Deployment> {
-    return this.fetch<Deployment>('/deployments', {
-      method: 'POST',
-      body: JSON.stringify(deployment),
+    perPage: number = 100,
+    search: string | undefined,
+    onDeployment: (deployment: Deployment) => void
+  ): Promise<void> {
+    let url = `/releases?page=${page}&per_page=${perPage}`;
+    if (search && search !== '(todas)') {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    const response = await fetch(`${this.baseUrl}${url}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
-  }
-
-  /**
-   * Get a single deployment by ID
-   * @param id - Deployment ID
-   * @returns Deployment data
-   */
-  async getDeployment(id: string): Promise<Deployment> {
-    return this.fetch<Deployment>(`/deployments/${id}`);
-  }
-
-  /**
-   * Update a deployment
-   * @param id - Deployment ID
-   * @param deployment - Partial deployment data to update
-   * @returns Updated deployment
-   */
-  async updateDeployment(
-    id: string,
-    deployment: Partial<CreateDeploymentDTO>
-  ): Promise<Deployment> {
-    return this.fetch<Deployment>(`/deployments/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(deployment),
-    });
-  }
-
-  /**
-   * Delete a deployment
-   * @param id - Deployment ID
-   */
-  async deleteDeployment(id: string): Promise<void> {
-    return this.fetch<void>(`/deployments/${id}`, {
-      method: 'DELETE',
-    });
+    if (!response.body) throw new Error('No stream body');
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            const obj = JSON.parse(line);
+            onDeployment(obj);
+          } catch (e) {
+            // línea inválida, ignorar
+          }
+        }
+      }
+    }
+    // Procesar cualquier línea restante
+    if (buffer.trim()) {
+      try {
+        const obj = JSON.parse(buffer);
+        onDeployment(obj);
+      } catch {}
+    }
   }
 }
 
-// Export singleton instance
 export const apiClient = new ApiClient(API_BASE_URL);

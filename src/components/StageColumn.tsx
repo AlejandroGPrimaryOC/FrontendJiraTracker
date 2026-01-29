@@ -81,7 +81,15 @@ export function StageColumn({ stage, deployments, onLoadMore, hasMore, isLoading
                       </p>
                       {versions.slice(1).map((v) => (
                         <div key={v.id} className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
-                          <code className="font-mono">{v.version}</code>
+                          <a
+                            href={`http://gitlab.primary/clearing-tech/one-clearing/api-caratula/-/tags/${v.version}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono hover:text-blue-700"
+                            style={{ textDecoration: 'none' }}
+                          >
+                            <code>{v.version}</code>
+                          </a>
                           <span className="ml-2">
                             {new Date(v.release_date).toLocaleDateString()}
                           </span>
@@ -93,15 +101,7 @@ export function StageColumn({ stage, deployments, onLoadMore, hasMore, isLoading
               );
             })}
 
-            {hasMore && (
-              <button
-                onClick={onLoadMore}
-                disabled={isLoading}
-                className="w-full py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
-              >
-                {isLoading ? 'Cargando...' : 'Cargar más'}
-              </button>
-            )}
+            {/* Botón de cargar más eliminado, carga automática en App.tsx */}
           </>
         )}
       </div>
