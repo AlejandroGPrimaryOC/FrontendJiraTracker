@@ -11,7 +11,7 @@ function App() {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [filteredDeployments, setFilteredDeployments] = useState<Deployment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVersion, setSelectedVersion] = useState<string>('1.0.7');
+  const [selectedVersion, setSelectedVersion] = useState<string>('1.0.8');
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -44,6 +44,9 @@ function App() {
 
   useEffect(() => {
     let filtered = deployments;
+    // Excluir cards cuya descripción no siga el patrón OCL-xxxx - usuario
+    const regex = /^OCL-\d+\s-\s\S+/;
+    filtered = filtered.filter(d => d.description && regex.test(d.description));
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(d =>
@@ -61,7 +64,7 @@ function App() {
   }, [deployments, searchQuery, selectedVersion]);
 
   // Generar lista de versiones dinámicamente a partir de los deployments
-  const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7'];
+  const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8'];
 
   const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
   const testingDeployments = filteredDeployments.filter(d => d.stage === 'testing');
