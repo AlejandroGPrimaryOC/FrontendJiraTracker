@@ -1,0 +1,1 @@
+window.JIRATRACKER_VERSION = "unknown";

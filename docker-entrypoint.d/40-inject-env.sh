@@ -8,3 +8,12 @@ if [ -n "$VITE_API_BASE_URL" ]; then
 fi
 
 echo "Environment variables injected successfully"
+
+# Inyectar JIRATRACKER_VERSION en /usr/share/nginx/html/env.js (raíz del sitio)
+if [ -n "$JIRATRACKER_VERSION" ]; then
+    echo "Injecting JIRATRACKER_VERSION: $JIRATRACKER_VERSION"
+    echo "window.JIRATRACKER_VERSION = \"$JIRATRACKER_VERSION\";" > /usr/share/nginx/html/env.js
+else
+    echo "window.JIRATRACKER_VERSION = \"unknown\";" > /usr/share/nginx/html/env.js
+fi
+echo "Environment variables injected successfully"

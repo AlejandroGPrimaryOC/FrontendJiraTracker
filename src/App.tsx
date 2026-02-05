@@ -182,6 +182,10 @@ function App() {
           />
         </div>
       </main>
+
+      <footer className="w-full text-center py-4 text-xs text-gray-500 bg-transparent">
+        Versión: {typeof window !== 'undefined' && (window as any).JIRATRACKER_VERSION ? (window as any).JIRATRACKER_VERSION : 'unknown'}
+      </footer>
     </div>
   );
 }
