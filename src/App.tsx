@@ -7,6 +7,7 @@ import { SearchBar } from './components/SearchBar';
 const ITEMS_PER_PAGE = 100;
 
 function App() {
+      const [showHidden, setShowHidden] = useState(true);
     const [isStreaming, setIsStreaming] = useState(false);
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [filteredDeployments, setFilteredDeployments] = useState<Deployment[]>([]);
@@ -14,7 +15,7 @@ function App() {
   const [selectedVersion, setSelectedVersion] = useState<string>('1.0.8');
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore] = useState(true);
 
   const fetchDeployments = useCallback(async (pageNum: number, append: boolean = false, version: string = selectedVersion) => {
     setIsLoading(true);
@@ -44,9 +45,8 @@ function App() {
 
   useEffect(() => {
     let filtered = deployments;
-    // Excluir cards cuya descripción no siga el patrón OCL-xxxx - usuario
-    const regex = /^OCL-\d+\s-\s\S+/;
-    filtered = filtered.filter(d => d.description && regex.test(d.description));
+    // Filtrar solo los deployments que tengan ticket_id
+    filtered = filtered.filter(d => d.ticket_id);
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(d =>
@@ -162,23 +162,14 @@ function App() {
           <StageColumn
             stage="dev"
             deployments={developDeployments}
-            onLoadMore={loadMore}
-            hasMore={hasMore}
-            isLoading={isLoading}
           />
           <StageColumn
             stage="testing"
             deployments={testingDeployments}
-            onLoadMore={loadMore}
-            hasMore={hasMore}
-            isLoading={isLoading}
           />
           <StageColumn
             stage="uat"
             deployments={uatDeployments}
-            onLoadMore={loadMore}
-            hasMore={hasMore}
-            isLoading={isLoading}
           />
         </div>
       </main>

@@ -5,9 +5,6 @@ import { DeploymentCard } from './DeploymentCard';
 interface StageColumnProps {
   stage: 'dev' | 'testing' | 'uat';
   deployments: Deployment[];
-  onLoadMore: () => void;
-  hasMore: boolean;
-  isLoading: boolean;
 }
 
 const stageConfig = {
@@ -31,7 +28,7 @@ const stageConfig = {
   },
 };
 
-export function StageColumn({ stage, deployments, onLoadMore, hasMore, isLoading }: StageColumnProps) {
+export function StageColumn({ stage, deployments }: StageColumnProps) {
   const config = stageConfig[stage];
   const Icon = config.icon;
 
