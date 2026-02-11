@@ -13,6 +13,7 @@ const statusConfig = {
   finalizada: { icon: CheckCircle, color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'Finalizada' },
   'qa in progress': { icon: Clock, color: 'text-purple-600', bg: 'bg-purple-50', label: 'QA In Progress' },
   bloqued: { icon: Ban, color: 'text-gray-700', bg: 'bg-gray-200', label: 'Bloqueado' },
+  blocked: { icon: Ban, color: 'text-gray-700', bg: 'bg-gray-200', label: 'Bloqueado' },
   'development completed': { icon: CheckCircle, color: 'text-green-700', bg: 'bg-green-100', label: 'Development Completed' },
   'seleccionado para desarrollo': { icon: Package, color: 'text-blue-800', bg: 'bg-blue-100', label: 'Seleccionado para Desarrollo' },
   'tareas por hacer': { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50', label: 'Tareas por Hacer' },
