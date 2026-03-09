@@ -12,7 +12,7 @@ function App() {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [filteredDeployments, setFilteredDeployments] = useState<Deployment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVersion, setSelectedVersion] = useState<string>('1.0.8');
+  const [selectedVersion, setSelectedVersion] = useState<string>('1.0.10');
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore] = useState(true);
@@ -64,7 +64,7 @@ function App() {
   }, [deployments, searchQuery, selectedVersion]);
 
   // Generar lista de versiones dinámicamente a partir de los deployments
-  const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8'];
+  const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8','1.0.9', '1.0.10'];
 
   const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
   const testingDeployments = filteredDeployments.filter(d => d.stage === 'testing');
