@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Activity, Filter, Users } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Activity, Filter, Users, ClipboardList } from 'lucide-react';
 import { apiClient, type Deployment } from './lib/api';
 import { StageColumn } from './components/StageColumn';
 import { SearchBar } from './components/SearchBar';
@@ -16,6 +16,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore] = useState(true);
+  const [pendientesUAT, setPendientesUAT] = useState(false);
 
   const fetchDeployments = useCallback(async (pageNum: number, append: boolean = false, version: string = selectedVersion) => {
     setIsLoading(true);
@@ -67,8 +68,15 @@ function App() {
   const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8','1.0.9', '1.0.10'];
 
   const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
-  const testingDeployments = filteredDeployments.filter(d => d.stage === 'testing');
   const uatDeployments = filteredDeployments.filter(d => d.stage === 'uat');
+
+  const uatTicketIds = useMemo(
+    () => new Set(uatDeployments.map(d => d.ticket_id)),
+    [uatDeployments]
+  );
+  const testingDeployments = filteredDeployments.filter(d =>
+    d.stage === 'testing' && (!pendientesUAT || !uatTicketIds.has(d.ticket_id))
+  );
 
   const totalDeployments = deployments.length;
   const uniqueTickets = new Set(deployments.map(d => d.ticket_id)).size;
@@ -141,6 +149,19 @@ function App() {
                   ))}
                 </select>
               </div>
+
+              <button
+                onClick={() => setPendientesUAT(prev => !prev)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-medium text-sm transition-colors duration-200 ${
+                  pendientesUAT
+                    ? 'bg-orange-500 border-orange-500 text-white hover:bg-orange-600'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+                title="Mostrar tickets en Testing que aún no están en UAT"
+              >
+                <ClipboardList className="w-4 h-4" />
+                Pendientes UAT
+              </button>
             </div>
           </div>
 
