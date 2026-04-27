@@ -12,7 +12,8 @@ function App() {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [filteredDeployments, setFilteredDeployments] = useState<Deployment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVersion, setSelectedVersion] = useState<string>('1.0.11');
+  const defaultVersion = ((window as any).JIRATRACKER_DEFAULT_VERSION as string) || import.meta.env.VITE_DEFAULT_VERSION || '1.0.11';
+  const [selectedVersion, setSelectedVersion] = useState<string>(defaultVersion);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore] = useState(true);
@@ -64,8 +65,14 @@ function App() {
     setFilteredDeployments(filtered);
   }, [deployments, searchQuery, selectedVersion]);
 
-  // Generar lista de versiones dinámicamente a partir de los deployments
-  const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8','1.0.9', '1.0.10','1.0.11'];
+  // Obtener lista de versiones desde variables de entorno (runtime o build-time)
+  const versionOptions = (() => {
+    const raw = ((window as any).JIRATRACKER_VERSION_OPTIONS as string) || import.meta.env.VITE_VERSION_OPTIONS || '';
+    if (raw) {
+      return raw.split(',').map((v: string) => v.trim()).filter(Boolean);
+    }
+    return ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.10', '1.0.11'];
+  })();
 
   const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
   const uatDeployments = filteredDeployments.filter(d => d.stage === 'uat');

@@ -9,11 +9,27 @@ fi
 
 echo "Environment variables injected successfully"
 
-# Inyectar JIRATRACKER_VERSION en /usr/share/nginx/html/env.js (raíz del sitio)
+# Inyectar variables en /usr/share/nginx/html/env.js (raíz del sitio)
+ENV_JS="/usr/share/nginx/html/env.js"
+
+# JIRATRACKER_VERSION
 if [ -n "$JIRATRACKER_VERSION" ]; then
     echo "Injecting JIRATRACKER_VERSION: $JIRATRACKER_VERSION"
-    echo "window.JIRATRACKER_VERSION = \"$JIRATRACKER_VERSION\";" > /usr/share/nginx/html/env.js
+    echo "window.JIRATRACKER_VERSION = \"$JIRATRACKER_VERSION\";" > "$ENV_JS"
 else
-    echo "window.JIRATRACKER_VERSION = \"unknown\";" > /usr/share/nginx/html/env.js
+    echo "window.JIRATRACKER_VERSION = \"unknown\";" > "$ENV_JS"
 fi
+
+# JIRATRACKER_VERSION_OPTIONS (comma-separated list of versions for the filter)
+if [ -n "$JIRATRACKER_VERSION_OPTIONS" ]; then
+    echo "Injecting JIRATRACKER_VERSION_OPTIONS: $JIRATRACKER_VERSION_OPTIONS"
+    echo "window.JIRATRACKER_VERSION_OPTIONS = \"$JIRATRACKER_VERSION_OPTIONS\";" >> "$ENV_JS"
+fi
+
+# JIRATRACKER_DEFAULT_VERSION (default selected version in the filter)
+if [ -n "$JIRATRACKER_DEFAULT_VERSION" ]; then
+    echo "Injecting JIRATRACKER_DEFAULT_VERSION: $JIRATRACKER_DEFAULT_VERSION"
+    echo "window.JIRATRACKER_DEFAULT_VERSION = \"$JIRATRACKER_DEFAULT_VERSION\";" >> "$ENV_JS"
+fi
+
 echo "Environment variables injected successfully"
