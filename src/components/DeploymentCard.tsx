@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
 import { Calendar, User, Package, AlertCircle, CheckCircle, Clock, Ban, Computer, Loader2 } from 'lucide-react';
-import { apiClient, type Deployment, type DeploymentDetail } from '../lib/api';
+import type { Deployment, DeploymentDetail } from '../lib/api';
 
 interface DeploymentCardProps {
   deployment: Deployment;
+  detail: DeploymentDetail | null;
+  loadingDetail: boolean;
 }
 
 const statusConfig = {
@@ -29,31 +30,7 @@ function SkeletonLine({ width = 'w-24' }: { width?: string }) {
   );
 }
 
-export function DeploymentCard({ deployment }: DeploymentCardProps) {
-  const [detail, setDetail] = useState<DeploymentDetail | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
-  const [detailError, setDetailError] = useState(false);
-
-  const needsDetail = !deployment.status && !deployment.description && !deployment.owner;
-
-  useEffect(() => {
-    if (!needsDetail) return;
-    let cancelled = false;
-    setLoadingDetail(true);
-    setDetailError(false);
-    apiClient.getDeploymentDetail(deployment.id)
-      .then((data) => {
-        if (!cancelled) setDetail(data);
-      })
-      .catch(() => {
-        if (!cancelled) setDetailError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingDetail(false);
-      });
-    return () => { cancelled = true; };
-  }, [deployment.id, needsDetail]);
-
+export function DeploymentCard({ deployment, detail, loadingDetail }: DeploymentCardProps) {
   const status = detail?.status || deployment.status;
   const description = detail?.description || deployment.description;
   const owner = detail?.owner || deployment.owner;
@@ -96,11 +73,6 @@ export function DeploymentCard({ deployment }: DeploymentCardProps) {
               <span className={`text-xs font-medium ${statusEntry.color}`}>
                 {statusEntry.label}
               </span>
-            </div>
-          ) : detailError ? (
-            <div className="flex items-center gap-1 bg-red-50 px-2 py-1 rounded">
-              <AlertCircle className="w-3 h-3 text-red-400" />
-              <span className="text-xs text-red-400">Error</span>
             </div>
           ) : null}
         </div>

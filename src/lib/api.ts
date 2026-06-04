@@ -18,7 +18,7 @@ export type Deployment = {
 };
 
 export type DeploymentDetail = {
-  id: string;
+  ticket_id: string;
   status: DeploymentStatus;
   description: string;
   owner: string;
@@ -132,11 +132,40 @@ class ApiClient {
   }
 
   /**
-   * Obtiene los detalles de JIRA de un deployment por su ID.
-   * Devuelve los campos faltantes: status, description, owner, created_at, updated_at.
+   * Abre un stream SSE para obtener detalles de JIRA de múltiples tickets.
+   * Envía los ticket_ids como query param y recibe eventos `release-detail` con los datos.
+   * Devuelve el EventSource para poder cerrarlo externamente (ej: cambio de versión).
    */
-  async getDeploymentDetail(id: string): Promise<DeploymentDetail> {
-    return this.fetch<DeploymentDetail>(`/releases-detail?id=${encodeURIComponent(id)}`);
+  streamDeploymentDetails(
+    ticketIds: string[],
+    onDetail: (detail: DeploymentDetail) => void,
+    onDone?: () => void,
+    onError?: (error: Event) => void
+  ): EventSource {
+    const ids = ticketIds.join(',');
+    const url = `${this.baseUrl}/release-details-stream?ticket_ids=${encodeURIComponent(ids)}`;
+    const source = new EventSource(url);
+
+    source.addEventListener('release-detail', (e: MessageEvent) => {
+      try {
+        const detail = JSON.parse(e.data) as DeploymentDetail;
+        onDetail(detail);
+      } catch {
+        // datos inválidos, ignorar
+      }
+    });
+
+    source.addEventListener('done', () => {
+      source.close();
+      onDone?.();
+    });
+
+    source.onerror = (e) => {
+      source.close();
+      onError?.(e);
+    };
+
+    return source;
   }
 }
 

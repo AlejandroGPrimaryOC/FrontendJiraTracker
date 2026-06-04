@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Activity, Filter, Users, ClipboardList } from 'lucide-react';
-import { apiClient, type Deployment } from './lib/api';
+import { apiClient, type Deployment, type DeploymentDetail } from './lib/api';
 import { StageColumn } from './components/StageColumn';
 import { SearchBar } from './components/SearchBar';
 
@@ -17,11 +17,26 @@ function App() {
   const [page, setPage] = useState(1);
   const [hasMore] = useState(true);
   const [pendientesUAT, setPendientesUAT] = useState(false);
+  const [detailsMap, setDetailsMap] = useState<Record<string, DeploymentDetail>>({});
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const detailSourceRef = useRef<EventSource | null>(null);
+
+  // Cerrar el SSE stream de detalles
+  const closeDetailStream = useCallback(() => {
+    if (detailSourceRef.current) {
+      detailSourceRef.current.close();
+      detailSourceRef.current = null;
+    }
+  }, []);
 
   const fetchDeployments = useCallback(async (pageNum: number, append: boolean = false, version: string = selectedVersion) => {
     setIsLoading(true);
     setIsStreaming(true);
-    if (!append) setDeployments([]); // Limpiar si no es append
+    if (!append) {
+      setDeployments([]);
+      setDetailsMap({});
+      closeDetailStream();
+    }
     try {
       await apiClient.getDeploymentsStream(
         pageNum,
@@ -37,12 +52,47 @@ function App() {
       setIsLoading(false);
       setIsStreaming(false);
     }
-  }, [selectedVersion]);
+  }, [selectedVersion, closeDetailStream]);
 
   useEffect(() => {
     fetchDeployments(1, false, selectedVersion);
     setPage(1);
   }, [fetchDeployments, selectedVersion]);
+
+  // Abrir SSE stream para cargar detalles de JIRA cuando termina el stream de deployments
+  useEffect(() => {
+    if (isStreaming || deployments.length === 0) return;
+
+    const uniqueTicketIds = [...new Set(deployments.map(d => d.ticket_id).filter(Boolean))];
+    if (uniqueTicketIds.length === 0) return;
+
+    // Cerrar stream anterior si existe
+    closeDetailStream();
+    setLoadingDetails(true);
+
+    const source = apiClient.streamDeploymentDetails(
+      uniqueTicketIds,
+      (detail) => {
+        setDetailsMap(prev => ({ ...prev, [detail.ticket_id]: detail }));
+      },
+      () => {
+        setLoadingDetails(false);
+      },
+      () => {
+        setLoadingDetails(false);
+      }
+    );
+    detailSourceRef.current = source;
+
+    return () => {
+      closeDetailStream();
+    };
+  }, [isStreaming, deployments, closeDetailStream]);
+
+  // Cerrar SSE al desmontar
+  useEffect(() => {
+    return () => closeDetailStream();
+  }, [closeDetailStream]);
 
   useEffect(() => {
     let filtered = deployments;
@@ -183,14 +233,20 @@ function App() {
           <StageColumn
             stage="dev"
             deployments={developDeployments}
+            detailsMap={detailsMap}
+            loadingDetails={loadingDetails}
           />
           <StageColumn
             stage="testing"
             deployments={testingDeployments}
+            detailsMap={detailsMap}
+            loadingDetails={loadingDetails}
           />
           <StageColumn
             stage="uat"
             deployments={uatDeployments}
+            detailsMap={detailsMap}
+            loadingDetails={loadingDetails}
           />
         </div>
       </main>
