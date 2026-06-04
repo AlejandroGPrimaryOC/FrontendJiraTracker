@@ -75,6 +75,10 @@ class ApiClient {
    * Obtiene deployments usando stream JSONL. Llama a onDeployment por cada deployment recibido.
    * Devuelve una promesa que resuelve cuando termina el stream.
    */
+  async getVersions(): Promise<string[]> {
+    return this.fetch<string[]>('/versions');
+  }
+
   async getDeploymentsStream(
     page: number = 1,
     perPage: number = 100,

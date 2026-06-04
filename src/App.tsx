@@ -12,11 +12,12 @@ function App() {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [filteredDeployments, setFilteredDeployments] = useState<Deployment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVersion, setSelectedVersion] = useState<string>('1.0.13');
+  const [selectedVersion, setSelectedVersion] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore] = useState(true);
   const [pendientesUAT, setPendientesUAT] = useState(false);
+  const [versionOptions, setVersionOptions] = useState<string[]>(['(todas)']);
 
   const fetchDeployments = useCallback(async (pageNum: number, append: boolean = false, version: string = selectedVersion) => {
     setIsLoading(true);
@@ -64,8 +65,17 @@ function App() {
     setFilteredDeployments(filtered);
   }, [deployments, searchQuery, selectedVersion]);
 
-  // Generar lista de versiones dinámicamente a partir de los deployments
-  const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8','1.0.9', '1.0.10','1.0.11','1.0.12','1.0.13'];
+  // Obtener versiones del backend al montar el componente
+  useEffect(() => {
+    apiClient.getVersions().then(versions => {
+      setVersionOptions(['(todas)', ...versions]);
+      if (versions.length > 0) {
+        setSelectedVersion(versions[versions.length - 1]);
+      }
+    }).catch(err => {
+      console.error('Error fetching versions:', err);
+    });
+  }, []);
 
   const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
   const uatDeployments = filteredDeployments.filter(d => d.stage === 'uat');
