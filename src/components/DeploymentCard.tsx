@@ -1,8 +1,10 @@
-import { Calendar, User, Package, AlertCircle, CheckCircle, Clock, Ban, Computer } from 'lucide-react';
-import type { Deployment } from '../lib/api';
+import { Calendar, User, Package, AlertCircle, CheckCircle, Clock, Ban, Computer, Loader2 } from 'lucide-react';
+import type { Deployment, DeploymentDetail } from '../lib/api';
 
 interface DeploymentCardProps {
   deployment: Deployment;
+  detail: DeploymentDetail | null;
+  loadingDetail: boolean;
 }
 
 const statusConfig = {
@@ -22,8 +24,21 @@ const statusConfig = {
   'ready for development': { icon: Package, color: 'text-indigo-700', bg: 'bg-indigo-50', label: 'Ready for Development' },
 };
 
-export function DeploymentCard({ deployment }: DeploymentCardProps) {
-  const StatusIcon = statusConfig[deployment.status].icon;
+function SkeletonLine({ width = 'w-24' }: { width?: string }) {
+  return (
+    <div className={`${width} h-4 bg-gray-200 rounded animate-pulse`} />
+  );
+}
+
+export function DeploymentCard({ deployment, detail, loadingDetail }: DeploymentCardProps) {
+  const status = detail?.status || deployment.status;
+  const description = detail?.summary || deployment.description;
+  const owner = detail?.owner || deployment.owner;
+  const jiraUrl = detail?.jira_url || `https://pmy.atlassian.net/browse/${deployment.ticket_id}`;
+
+  const statusEntry = status ? (statusConfig as Record<string, typeof statusConfig['activo']>)[status] ?? null : null;
+  const StatusIcon = statusEntry?.icon;
+
   const releaseDate = new Date(deployment.release_date);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - releaseDate.getTime());
@@ -40,7 +55,7 @@ export function DeploymentCard({ deployment }: DeploymentCardProps) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <a
-            href={`https://pmy.atlassian.net/browse/${deployment.ticket_id}`}
+            href={jiraUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded hover:text-blue-900"
@@ -48,17 +63,28 @@ export function DeploymentCard({ deployment }: DeploymentCardProps) {
           >
             {deployment.ticket_id}
           </a>
-          <div className={`flex items-center gap-1 ${statusConfig[deployment.status].bg} px-2 py-1 rounded`}>
-            <StatusIcon className={`w-3 h-3 ${statusConfig[deployment.status].color}`} />
-            <span className={`text-xs font-medium ${statusConfig[deployment.status].color}`}>
-              {statusConfig[deployment.status].label}
-            </span>
-          </div>
+          {loadingDetail && !statusEntry ? (
+            <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+              <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />
+              <span className="text-xs text-gray-400">Cargando...</span>
+            </div>
+          ) : statusEntry && StatusIcon ? (
+            <div className={`flex items-center gap-1 ${statusEntry.bg} px-2 py-1 rounded`}>
+              <StatusIcon className={`w-3 h-3 ${statusEntry.color}`} />
+              <span className={`text-xs font-medium ${statusEntry.color}`}>
+                {statusEntry.label}
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 
       <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2">
-        {deployment.description}
+        {loadingDetail && !description ? (
+          <SkeletonLine width="w-full" />
+        ) : (
+          description || '—'
+        )}
       </h3>
 
       <div className="space-y-2 mb-3">
@@ -77,12 +103,16 @@ export function DeploymentCard({ deployment }: DeploymentCardProps) {
 
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <User className="w-4 h-4" />
-          <span>{deployment.owner}</span>
+          {loadingDetail && !owner ? (
+            <SkeletonLine width="w-20" />
+          ) : (
+            <span>{owner || '—'}</span>
+          )}
         </div>
 
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Computer className="w-4 h-4" />
-          <span>{deployment.developer}</span>
+          <span>{deployment.developer || '—'}</span>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-gray-600">

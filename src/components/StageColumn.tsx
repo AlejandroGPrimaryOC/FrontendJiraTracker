@@ -1,10 +1,12 @@
 import { Code, TestTube, CheckSquare } from 'lucide-react';
-import type { Deployment } from '../lib/api';
+import type { Deployment, DeploymentDetail } from '../lib/api';
 import { DeploymentCard } from './DeploymentCard';
 
 interface StageColumnProps {
   stage: 'dev' | 'testing' | 'uat';
   deployments: Deployment[];
+  detailsMap: Record<string, DeploymentDetail>;
+  loadingDetails: boolean;
 }
 
 const stageConfig = {
@@ -28,7 +30,7 @@ const stageConfig = {
   },
 };
 
-export function StageColumn({ stage, deployments }: StageColumnProps) {
+export function StageColumn({ stage, deployments, detailsMap, loadingDetails }: StageColumnProps) {
   const config = stageConfig[stage];
   const Icon = config.icon;
 
@@ -70,7 +72,11 @@ export function StageColumn({ stage, deployments }: StageColumnProps) {
               const versions = groupedDeployments[deployment.ticket_id];
               return (
                 <div key={deployment.id}>
-                  <DeploymentCard deployment={deployment} />
+                  <DeploymentCard
+                    deployment={deployment}
+                    detail={detailsMap[deployment.ticket_id] || null}
+                    loadingDetail={loadingDetails && !detailsMap[deployment.ticket_id]}
+                  />
                   {versions.length > 1 && (
                     <div className="mt-2 ml-4 pl-4 border-l-2 border-gray-300 space-y-1">
                       <p className="text-xs font-semibold text-gray-600 mb-2">

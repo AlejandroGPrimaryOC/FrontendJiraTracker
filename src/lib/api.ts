@@ -1,18 +1,28 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api-tracker.oneclearing.dev.primary';
 
+export type DeploymentStatus = 'activo' | 'en curso' | 'ready to qa' | 'finalizado';
+
 export type Deployment = {
   id: string;                    
   ticket_id: string;             // Jira ticket ID (e.g., "PROJ-123")
   version: string;               // Version (e.g., "1.2.3-alpha.1")
   stage: 'dev' | 'testing' | 'uat';  // Stage
   release_date: string;          
-  description: string;           
-  owner: string;            
-  developer: string;     
-  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado'; 
-  created_at: string;           
-  updated_at: string;           
+  description?: string;           
+  owner?: string;            
+  developer?: string;     
+  status?: DeploymentStatus; 
+  created_at?: string;           
+  updated_at?: string;           
+};
+
+export type DeploymentDetail = {
+  ticket_id: string;
+  summary: string;
+  status: string;
+  owner: string;
+  jira_url: string;
 };
 
 export type CreateDeploymentDTO = {
@@ -22,7 +32,7 @@ export type CreateDeploymentDTO = {
   description: string;           
   owner: string;                 
   release_date: string;          
-  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  
+  status: DeploymentStatus;  
 };
 
 export type PaginatedResponse<T> = {
@@ -118,6 +128,43 @@ class ApiClient {
         onDeployment(obj);
       } catch {}
     }
+  }
+
+  /**
+   * Abre un stream SSE para obtener detalles de JIRA de múltiples tickets.
+   * Envía los ticket_ids como query param y recibe eventos `release-detail` con los datos.
+   * Devuelve el EventSource para poder cerrarlo externamente (ej: cambio de versión).
+   */
+  streamDeploymentDetails(
+    ticketIds: string[],
+    onDetail: (detail: DeploymentDetail) => void,
+    onDone?: () => void,
+    onError?: (error: Event) => void
+  ): EventSource {
+    const ids = ticketIds.join(',');
+    const url = `${this.baseUrl}/release-details-stream?ticket_ids=${encodeURIComponent(ids)}`;
+    const source = new EventSource(url);
+
+    source.addEventListener('release-detail', (e: MessageEvent) => {
+      try {
+        const detail = JSON.parse(e.data) as DeploymentDetail;
+        onDetail(detail);
+      } catch {
+        // datos inválidos, ignorar
+      }
+    });
+
+    source.addEventListener('done', () => {
+      source.close();
+      onDone?.();
+    });
+
+    source.onerror = (e) => {
+      source.close();
+      onError?.(e);
+    };
+
+    return source;
   }
 }
 
