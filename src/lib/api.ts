@@ -1,18 +1,29 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api-tracker.oneclearing.dev.primary';
 
+export type DeploymentStatus = 'activo' | 'en curso' | 'ready to qa' | 'finalizado';
+
 export type Deployment = {
   id: string;                    
   ticket_id: string;             // Jira ticket ID (e.g., "PROJ-123")
   version: string;               // Version (e.g., "1.2.3-alpha.1")
   stage: 'dev' | 'testing' | 'uat';  // Stage
   release_date: string;          
-  description: string;           
-  owner: string;            
-  developer: string;     
-  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado'; 
-  created_at: string;           
-  updated_at: string;           
+  description?: string;           
+  owner?: string;            
+  developer?: string;     
+  status?: DeploymentStatus; 
+  created_at?: string;           
+  updated_at?: string;           
+};
+
+export type DeploymentDetail = {
+  id: string;
+  status: DeploymentStatus;
+  description: string;
+  owner: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type CreateDeploymentDTO = {
@@ -22,7 +33,7 @@ export type CreateDeploymentDTO = {
   description: string;           
   owner: string;                 
   release_date: string;          
-  status: 'activo' | 'en curso' | 'ready to qa' | 'finalizado';  
+  status: DeploymentStatus;  
 };
 
 export type PaginatedResponse<T> = {
@@ -118,6 +129,14 @@ class ApiClient {
         onDeployment(obj);
       } catch {}
     }
+  }
+
+  /**
+   * Obtiene los detalles de JIRA de un deployment por su ID.
+   * Devuelve los campos faltantes: status, description, owner, created_at, updated_at.
+   */
+  async getDeploymentDetail(id: string): Promise<DeploymentDetail> {
+    return this.fetch<DeploymentDetail>(`/releases-detail?id=${encodeURIComponent(id)}`);
   }
 }
 

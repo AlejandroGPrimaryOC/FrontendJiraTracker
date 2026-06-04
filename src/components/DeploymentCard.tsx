@@ -1,5 +1,6 @@
-import { Calendar, User, Package, AlertCircle, CheckCircle, Clock, Ban, Computer } from 'lucide-react';
-import type { Deployment } from '../lib/api';
+import { useState, useEffect } from 'react';
+import { Calendar, User, Package, AlertCircle, CheckCircle, Clock, Ban, Computer, Loader2 } from 'lucide-react';
+import { apiClient, type Deployment, type DeploymentDetail } from '../lib/api';
 
 interface DeploymentCardProps {
   deployment: Deployment;
@@ -22,8 +23,44 @@ const statusConfig = {
   'ready for development': { icon: Package, color: 'text-indigo-700', bg: 'bg-indigo-50', label: 'Ready for Development' },
 };
 
+function SkeletonLine({ width = 'w-24' }: { width?: string }) {
+  return (
+    <div className={`${width} h-4 bg-gray-200 rounded animate-pulse`} />
+  );
+}
+
 export function DeploymentCard({ deployment }: DeploymentCardProps) {
-  const StatusIcon = statusConfig[deployment.status].icon;
+  const [detail, setDetail] = useState<DeploymentDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [detailError, setDetailError] = useState(false);
+
+  const needsDetail = !deployment.status && !deployment.description && !deployment.owner;
+
+  useEffect(() => {
+    if (!needsDetail) return;
+    let cancelled = false;
+    setLoadingDetail(true);
+    setDetailError(false);
+    apiClient.getDeploymentDetail(deployment.id)
+      .then((data) => {
+        if (!cancelled) setDetail(data);
+      })
+      .catch(() => {
+        if (!cancelled) setDetailError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDetail(false);
+      });
+    return () => { cancelled = true; };
+  }, [deployment.id, needsDetail]);
+
+  const status = detail?.status || deployment.status;
+  const description = detail?.description || deployment.description;
+  const owner = detail?.owner || deployment.owner;
+
+  const statusEntry = status ? statusConfig[status] : null;
+  const StatusIcon = statusEntry?.icon;
+
   const releaseDate = new Date(deployment.release_date);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - releaseDate.getTime());
@@ -48,17 +85,33 @@ export function DeploymentCard({ deployment }: DeploymentCardProps) {
           >
             {deployment.ticket_id}
           </a>
-          <div className={`flex items-center gap-1 ${statusConfig[deployment.status].bg} px-2 py-1 rounded`}>
-            <StatusIcon className={`w-3 h-3 ${statusConfig[deployment.status].color}`} />
-            <span className={`text-xs font-medium ${statusConfig[deployment.status].color}`}>
-              {statusConfig[deployment.status].label}
-            </span>
-          </div>
+          {loadingDetail && !statusEntry ? (
+            <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+              <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />
+              <span className="text-xs text-gray-400">Cargando...</span>
+            </div>
+          ) : statusEntry && StatusIcon ? (
+            <div className={`flex items-center gap-1 ${statusEntry.bg} px-2 py-1 rounded`}>
+              <StatusIcon className={`w-3 h-3 ${statusEntry.color}`} />
+              <span className={`text-xs font-medium ${statusEntry.color}`}>
+                {statusEntry.label}
+              </span>
+            </div>
+          ) : detailError ? (
+            <div className="flex items-center gap-1 bg-red-50 px-2 py-1 rounded">
+              <AlertCircle className="w-3 h-3 text-red-400" />
+              <span className="text-xs text-red-400">Error</span>
+            </div>
+          ) : null}
         </div>
       </div>
 
       <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2">
-        {deployment.description}
+        {loadingDetail && !description ? (
+          <SkeletonLine width="w-full" />
+        ) : (
+          description || '—'
+        )}
       </h3>
 
       <div className="space-y-2 mb-3">
@@ -77,12 +130,16 @@ export function DeploymentCard({ deployment }: DeploymentCardProps) {
 
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <User className="w-4 h-4" />
-          <span>{deployment.owner}</span>
+          {loadingDetail && !owner ? (
+            <SkeletonLine width="w-20" />
+          ) : (
+            <span>{owner || '—'}</span>
+          )}
         </div>
 
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Computer className="w-4 h-4" />
-          <span>{deployment.developer}</span>
+          <span>{deployment.developer || '—'}</span>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-gray-600">
