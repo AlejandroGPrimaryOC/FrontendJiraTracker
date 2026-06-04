@@ -32,10 +32,11 @@ function SkeletonLine({ width = 'w-24' }: { width?: string }) {
 
 export function DeploymentCard({ deployment, detail, loadingDetail }: DeploymentCardProps) {
   const status = detail?.status || deployment.status;
-  const description = detail?.description || deployment.description;
+  const description = detail?.summary || deployment.description;
   const owner = detail?.owner || deployment.owner;
+  const jiraUrl = detail?.jira_url || `https://pmy.atlassian.net/browse/${deployment.ticket_id}`;
 
-  const statusEntry = status ? statusConfig[status] : null;
+  const statusEntry = status ? (statusConfig as Record<string, typeof statusConfig['activo']>)[status] ?? null : null;
   const StatusIcon = statusEntry?.icon;
 
   const releaseDate = new Date(deployment.release_date);
@@ -54,7 +55,7 @@ export function DeploymentCard({ deployment, detail, loadingDetail }: Deployment
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <a
-            href={`https://pmy.atlassian.net/browse/${deployment.ticket_id}`}
+            href={jiraUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded hover:text-blue-900"

@@ -19,11 +19,10 @@ export type Deployment = {
 
 export type DeploymentDetail = {
   ticket_id: string;
-  status: DeploymentStatus;
-  description: string;
+  summary: string;
+  status: string;
   owner: string;
-  created_at: string;
-  updated_at: string;
+  jira_url: string;
 };
 
 export type CreateDeploymentDTO = {
