@@ -6,14 +6,20 @@ import { SearchBar } from './components/SearchBar';
 
 const ITEMS_PER_PAGE = 100;
 
+const extractStableVersion = (version?: string | null): string | null => {
+  if (!version) return null;
+  const match = version.trim().match(/\d+\.\d+\.\d+/);
+  return match ? match[0] : null;
+};
+
 function App() {
-      const [showHidden, setShowHidden] = useState(true);
-    const [isStreaming, setIsStreaming] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [filteredDeployments, setFilteredDeployments] = useState<Deployment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVersion, setSelectedVersion] = useState<string>('1.0.13');
+  const [selectedVersion, setSelectedVersion] = useState<string>('(todas)');
   const [isLoading, setIsLoading] = useState(true);
+  const [availableVersions, setAvailableVersions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore] = useState(true);
   const [pendientesUAT, setPendientesUAT] = useState(false);
@@ -59,7 +65,7 @@ function App() {
     setPage(1);
   }, [fetchDeployments, selectedVersion]);
 
-  // Abrir SSE stream para cargar detalles de JIRA cuando termina el stream de deployments
+  // Abrir SSE stream para cargar detalles de JIRA cuandnoo termina el stream de deployments
   useEffect(() => {
     if (isStreaming || deployments.length === 0) return;
 
@@ -89,6 +95,13 @@ function App() {
     };
   }, [isStreaming, deployments, closeDetailStream]);
 
+  // Cargar lista de versiones desde el backend
+  useEffect(() => {
+    apiClient.getVersions()
+      .then(versions => setAvailableVersions(versions))
+      .catch(err => console.error('Error fetching versions:', err));
+  }, []);
+
   // Cerrar SSE al desmontar
   useEffect(() => {
     return () => closeDetailStream();
@@ -109,13 +122,23 @@ function App() {
       );
     }
     if (selectedVersion && selectedVersion !== '(todas)') {
-      filtered = filtered.filter(d => d.version && d.version.startsWith(selectedVersion));
+      filtered = filtered.filter(d => extractStableVersion(d.version) === selectedVersion);
     }
     setFilteredDeployments(filtered);
   }, [deployments, searchQuery, selectedVersion]);
 
-  // Generar lista de versiones dinámicamente a partir de los deployments
-  const versionOptions = ['(todas)', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8','1.0.9', '1.0.10','1.0.11','1.0.12','1.0.13'];
+  // Lista de versiones obtenida desde el backend (/versions)
+  const versionOptions = useMemo(() => {
+    const normalized = Array.from(
+      new Set(
+        availableVersions
+          .map(v => extractStableVersion(v))
+          .filter((v): v is string => Boolean(v))
+      )
+    );
+    const sorted = normalized.sort((a, b) => b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' }));
+    return ['(todas)', ...sorted];
+  }, [availableVersions]);
 
   const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
   const uatDeployments = filteredDeployments.filter(d => d.stage === 'uat');

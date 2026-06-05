@@ -100,10 +100,30 @@ class ApiClient {
         'Content-Type': 'application/json',
       },
     });
+    if (!response.ok) {
+      throw new Error(`HTTP error! ${response.status}`);
+    }
     if (!response.body) throw new Error('No stream body');
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    const emitDeployment = (value: unknown) => {
+      if (Array.isArray(value)) {
+        value.forEach(emitDeployment);
+        return;
+      }
+      if (!value || typeof value !== 'object') {
+        return;
+      }
+
+      const candidate = value as Partial<Deployment>;
+      if (!candidate.id || !candidate.ticket_id || !candidate.stage) {
+        return;
+      }
+
+      onDeployment(candidate as Deployment);
+    };
+
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
@@ -114,7 +134,8 @@ class ApiClient {
         if (line.trim()) {
           try {
             const obj = JSON.parse(line);
-            onDeployment(obj);
+            // JSONL mode: one deployment per line
+            emitDeployment(obj);
           } catch (e) {
             // línea inválida, ignorar
           }
@@ -125,9 +146,21 @@ class ApiClient {
     if (buffer.trim()) {
       try {
         const obj = JSON.parse(buffer);
-        onDeployment(obj);
+        // Compatibilidad con respuesta JSON normal: [] o { data: [] }
+        if (obj && typeof obj === 'object' && !Array.isArray(obj) && 'data' in obj) {
+          emitDeployment((obj as PaginatedResponse<Deployment>).data);
+        } else {
+          emitDeployment(obj);
+        }
       } catch {}
     }
+  }
+
+  /**
+   * Obtiene la lista de versiones disponibles desde el backend.
+   */
+  async getVersions(): Promise<string[]> {
+    return this.fetch<string[]>('/versions');
   }
 
   /**
