@@ -9,6 +9,18 @@ interface StageColumnProps {
   loadingDetails: boolean;
 }
 
+const PENDING_VALUE_TEXT = 'Dato pendiente de carga';
+
+const isPlaceholderValue = (value?: string | null): boolean => {
+  return typeof value === 'string' && value.trim().toLowerCase() === 'placeholder';
+};
+
+const getDisplayValue = (value?: string | null, fallback: string = '—'): string => {
+  if (isPlaceholderValue(value)) return PENDING_VALUE_TEXT;
+  if (!value || !value.trim()) return fallback;
+  return value;
+};
+
 const stageConfig = {
   dev: {
     title: 'dev',
@@ -84,17 +96,25 @@ export function StageColumn({ stage, deployments, detailsMap, loadingDetails }: 
                       </p>
                       {versions.slice(1).map((v) => (
                         <div key={v.id} className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
-                          <a
-                            href={`http://gitlab.primary/clearing-tech/one-clearing/api-caratula/-/tags/${v.version}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-mono hover:text-blue-700"
-                            style={{ textDecoration: 'none' }}
-                          >
-                            <code>{v.version}</code>
-                          </a>
+                          {!isPlaceholderValue(v.version) && v.version ? (
+                            <a
+                              href={`http://gitlab.primary/clearing-tech/one-clearing/api-caratula/-/tags/${v.version}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-mono hover:text-blue-700"
+                              style={{ textDecoration: 'none' }}
+                            >
+                              <code>{v.version}</code>
+                            </a>
+                          ) : (
+                            <span className="text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">
+                              {getDisplayValue(v.version)}
+                            </span>
+                          )}
                           <span className="ml-2">
-                            {new Date(v.release_date).toLocaleDateString()}
+                            {isPlaceholderValue(v.release_date) || Number.isNaN(new Date(v.release_date).getTime())
+                              ? getDisplayValue(v.release_date)
+                              : new Date(v.release_date).toLocaleDateString()}
                           </span>
                         </div>
                       ))}
