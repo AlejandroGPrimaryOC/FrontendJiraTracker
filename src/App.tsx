@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Activity, Filter, Users, ClipboardList } from 'lucide-react';
+import { Activity, Filter, Users, ClipboardList, LayoutGrid, FileBarChart } from 'lucide-react';
 import { apiClient, type Deployment, type DeploymentDetail } from './lib/api';
 import { StageColumn } from './components/StageColumn';
 import { SearchBar } from './components/SearchBar';
+import { SprintReportView } from './components/SprintReportView';
 
 const ITEMS_PER_PAGE = 100;
+
+type TabKey = 'board' | 'sprint';
 
 const extractStableVersion = (version?: string | null): string | null => {
   if (!version) return null;
@@ -25,6 +28,7 @@ function App() {
   const [pendientesUAT, setPendientesUAT] = useState(false);
   const [detailsMap, setDetailsMap] = useState<Record<string, DeploymentDetail>>({});
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>('board');
   const detailSourceRef = useRef<EventSource | null>(null);
 
   // Cerrar el SSE stream de detalles
@@ -200,6 +204,33 @@ function App() {
             </div>
           </div>
 
+          <div className="flex gap-1 border-b border-gray-200 mb-6">
+            <button
+              onClick={() => setActiveTab('board')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors duration-200 ${
+                activeTab === 'board'
+                  ? 'border-blue-600 text-blue-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Tablero
+            </button>
+            <button
+              onClick={() => setActiveTab('sprint')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors duration-200 ${
+                activeTab === 'sprint'
+                  ? 'border-blue-600 text-blue-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FileBarChart className="w-4 h-4" />
+              Reportes de Sprint
+            </button>
+          </div>
+
+          {activeTab === 'board' && (
+          <>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <SearchBar
@@ -248,9 +279,12 @@ function App() {
               <span className="text-gray-600">Tickets Únicos: <strong>{uniqueTickets}</strong></span>
             </div>
           </div>
+          </>
+          )}
         </div>
       </header>
 
+      {activeTab === 'board' ? (
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-280px)]">
           <StageColumn
@@ -273,6 +307,9 @@ function App() {
           />
         </div>
       </main>
+      ) : (
+        <SprintReportView versionOptions={versionOptions} />
+      )}
 
       <footer className="w-full text-center py-4 text-xs text-gray-500 bg-transparent">
         Versión: {typeof window !== 'undefined' && (window as any).JIRATRACKER_VERSION ? (window as any).JIRATRACKER_VERSION : 'unknown'}

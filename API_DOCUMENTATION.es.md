@@ -84,6 +84,51 @@ interface PaginatedResponse<T> {
 }
 ```
 
+### DTOs del Reporte de Sprint
+
+Usados por la pestaña de **reporte de fin de sprint**. Un *sprint* se identifica
+por una versión estable (`major.minor.patch`) y agrega todas las Release
+Candidate (`rc.x`) desplegadas para esa versión.
+
+```typescript
+// Una entrada del changelog: un ticket (OCL-xxx) y el commit/cambios que lo
+// incluyeron en una versión RC determinada.
+interface SprintChangelogEntry {
+  ticket_id: string;             // ID del ticket Jira (ej: "OCL-1234")
+  summary: string;               // Título / descripción del ticket
+  status?: string;               // Estado del ticket (opcional)
+  version: string;               // Versión RC donde se incluyó (ej: "1.2.3-rc.4")
+  git_user?: string;             // Usuario git asignado / autor
+  commit_hash?: string;          // Hash del commit
+  commit_message?: string;       // Descripción del commit
+  release_date?: string;         // Fecha del deploy de la RC (ISO 8601)
+  jira_url?: string;             // URL al ticket en Jira
+  changes?: string[];            // Lista de cambios / archivos afectados
+}
+
+// Métricas de calidad y tests de una versión RC (para graficar tendencias).
+interface SprintVersionMetrics {
+  version: string;               // Versión RC (ej: "1.2.3-rc.4")
+  release_date?: string;         // Fecha del deploy (ISO 8601)
+  coverage?: number;             // Cobertura de tests (%)
+  line_count?: number;           // Líneas de código (line counter)
+  warnings?: number;             // Warnings del build/lint
+  cyclomatic_complexity?: number;// Complejidad ciclomática promedio
+  code_smells?: number;          // Code smells del análisis estático
+  duplications?: number;         // Duplicación de código (%)
+  tests_total?: number;          // Total de tests
+  tests_passed?: number;         // Tests que pasaron
+}
+
+interface SprintReport {
+  sprint: string;                // Versión estable del sprint (ej: "1.2.3")
+  rc_versions: string[];         // Versiones RC incluidas, en orden de despliegue
+  changelog: SprintChangelogEntry[];
+  metrics: SprintVersionMetrics[];
+  generated_at?: string;         // Timestamp de generación (ISO 8601)
+}
+```
+
 ## Endpoints de API
 
 ### 1. Obtener Despliegues (Paginado)
@@ -259,6 +304,91 @@ Elimina un despliegue.
 
 **Respuestas de Error:**
 - `404 Not Found`: Despliegue no encontrado
+- `500 Internal Server Error`: Error del servidor
+
+---
+
+### 6. Obtener Reporte de Sprint
+
+Genera el reporte de fin de sprint para una versión estable. El backend debe
+reunir todas las RC (`rc.x`) desplegadas para la versión `major.minor.patch`
+solicitada y agregar (a) el changelog de todos los tickets incluidos y (b) las
+métricas de tests/calidad de cada RC, para que el frontend pueda graficar su
+evolución.
+
+**Endpoint:** `GET /sprint-report`
+
+**Parámetros de Query:**
+- `version` (requerido): Versión estable del sprint (`major.minor.patch`, ej: `1.2.3`)
+
+**Respuesta exitosa (200):**
+
+```json
+{
+  "sprint": "1.2.3",
+  "rc_versions": ["1.2.3-rc.1", "1.2.3-rc.2", "1.2.3-rc.3"],
+  "generated_at": "2026-06-12T21:00:00Z",
+  "changelog": [
+    {
+      "ticket_id": "OCL-1234",
+      "summary": "Implementación de validación de caratula",
+      "status": "finalizado",
+      "version": "1.2.3-rc.2",
+      "git_user": "jperez",
+      "commit_hash": "a1b2c3d4e5f6",
+      "commit_message": "feat(caratula): agrega validación de montos",
+      "release_date": "2026-06-05",
+      "jira_url": "https://pmy.atlassian.net/browse/OCL-1234",
+      "changes": ["src/caratula/validator.ts", "src/caratula/rules.ts"]
+    }
+  ],
+  "metrics": [
+    {
+      "version": "1.2.3-rc.1",
+      "release_date": "2026-06-01",
+      "coverage": 72.5,
+      "line_count": 18450,
+      "warnings": 14,
+      "cyclomatic_complexity": 3.8,
+      "code_smells": 22,
+      "duplications": 4.1,
+      "tests_total": 320,
+      "tests_passed": 318
+    },
+    {
+      "version": "1.2.3-rc.2",
+      "release_date": "2026-06-05",
+      "coverage": 75.1,
+      "line_count": 18620,
+      "warnings": 9,
+      "cyclomatic_complexity": 3.6,
+      "code_smells": 18,
+      "duplications": 3.7,
+      "tests_total": 340,
+      "tests_passed": 340
+    }
+  ]
+}
+```
+
+**Notas:**
+- `rc_versions` y `metrics` deben venir ordenados por fecha de despliegue (más
+  antiguo primero) para que los gráficos de tendencia se lean de izquierda a derecha.
+- Todos los campos de métricas son opcionales; omití los que tu pipeline no genere.
+- `coverage` y `duplications` son porcentajes (0–100). El frontend interpreta como
+  mejora un `coverage`/`tests_passed` más alto, y como mejora un `warnings`,
+  `cyclomatic_complexity`, `code_smells` y `duplications` más bajo.
+
+**Fuentes de datos sugeridas:**
+- **Changelog:** Jira (summary/estado del ticket) + historial Git del repo
+  `api-caratula` entre tags RC consecutivos (autor, hash, mensaje, archivos).
+- **Métricas:** runner de tests de CI (coverage, total/pasados), herramienta de
+  análisis estático tipo SonarQube (complejidad ciclomática, code smells,
+  duplicación, warnings) y un contador de líneas (ej: `cloc`).
+
+**Respuestas de Error:**
+- `400 Bad Request`: Falta o es inválido el parámetro `version`
+- `404 Not Found`: No se encontraron RC para el sprint solicitado
 - `500 Internal Server Error`: Error del servidor
 
 ---

@@ -43,6 +43,52 @@ export type PaginatedResponse<T> = {
   has_more: boolean;
 };
 
+/**
+ * Entrada del changelog de un sprint: un ticket OCL-xxx con su detalle y el
+ * commit/cambios que lo incluyeron en una versión RC concreta.
+ */
+export type SprintChangelogEntry = {
+  ticket_id: string;             // ID del ticket Jira (ej: "OCL-1234")
+  summary: string;               // Descripción / título del ticket
+  status?: string;               // Estado del ticket
+  version: string;               // Versión RC donde se incluyó (ej: "1.2.3-rc.4")
+  git_user?: string;             // Usuario git asignado al cambio
+  commit_hash?: string;          // Hash del commit
+  commit_message?: string;       // Descripción del commit
+  release_date?: string;         // Fecha del deploy de la RC (ISO 8601)
+  jira_url?: string;             // URL al ticket en Jira
+  changes?: string[];            // Lista de cambios / archivos afectados
+};
+
+/**
+ * Métricas de calidad y tests asociadas a una versión RC del sprint.
+ * Permite graficar la evolución (mejora/empeora) a lo largo de las RC.
+ */
+export type SprintVersionMetrics = {
+  version: string;               // Versión RC (ej: "1.2.3-rc.4")
+  release_date?: string;         // Fecha del deploy (ISO 8601)
+  coverage?: number;             // Cobertura de tests (%)
+  line_count?: number;           // Líneas de código (line counter)
+  warnings?: number;             // Cantidad de warnings del build/lint
+  cyclomatic_complexity?: number;// Complejidad ciclomática promedio
+  code_smells?: number;          // Code smells reportados por el análisis estático
+  duplications?: number;         // Duplicación de código (%)
+  tests_total?: number;          // Total de tests
+  tests_passed?: number;         // Tests que pasaron
+};
+
+/**
+ * Reporte de fin de sprint. Un sprint está determinado por la versión estable
+ * (major.minor.patch) e incluye todas las RC desplegadas.
+ */
+export type SprintReport = {
+  sprint: string;                // Versión estable del sprint (ej: "1.2.3")
+  rc_versions: string[];         // Versiones RC incluidas, en orden de despliegue
+  changelog: SprintChangelogEntry[];
+  metrics: SprintVersionMetrics[];
+  generated_at?: string;         // Timestamp de generación del reporte (ISO 8601)
+};
+
 class ApiClient {
   private baseUrl: string;
 
@@ -161,6 +207,21 @@ class ApiClient {
    */
   async getVersions(): Promise<string[]> {
     return this.fetch<string[]>('/versions');
+  }
+
+  /**
+   * Obtiene el reporte de fin de sprint para una versión estable
+   * (major.minor.patch). El backend debe agregar el changelog de todos los
+   * tickets incluidos en las RC de esa versión junto con las métricas de
+   * tests/calidad por cada RC.
+   *
+   * Endpoint esperado: GET /sprint-report?version={major.minor.patch}
+   */
+  async getSprintReport(version: string): Promise<SprintReport> {
+    const stable = version.trim();
+    return this.fetch<SprintReport>(
+      `/sprint-report?version=${encodeURIComponent(stable)}`
+    );
   }
 
   /**

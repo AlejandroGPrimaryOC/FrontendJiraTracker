@@ -175,6 +175,65 @@ order: string (opcional, "asc" | "desc", default: "desc")
 
 **Respuesta exitosa (204 No Content)**
 
+### 6. GET /sprint-report - Reporte de Fin de Sprint
+
+Genera el reporte de fin de sprint para una versión estable. Un *sprint* se
+identifica por la versión `major.minor.patch` e incluye **todas las RC (`rc.x`)**
+desplegadas para esa versión.
+
+**Parámetros de Query:**
+```
+version: string (requerido, ej: "1.2.3")
+```
+
+El backend debe agregar, para la versión solicitada:
+- **Changelog**: cada ticket `OCL-xxx` con su descripción, usuario git asignado,
+  hash y mensaje del commit, la RC donde se incluyó y los archivos cambiados.
+- **Métricas por RC**: cobertura de tests, conteo de líneas, warnings,
+  complejidad ciclomática, code smells, duplicación y total/pasados de tests.
+  El frontend grafica la evolución (mejora/empeora) entre RCs.
+
+**Respuesta exitosa (200):**
+```json
+{
+  "sprint": "1.2.3",
+  "rc_versions": ["1.2.3-rc.1", "1.2.3-rc.2"],
+  "generated_at": "2026-06-12T21:00:00Z",
+  "changelog": [
+    {
+      "ticket_id": "OCL-1234",
+      "summary": "Implementación de validación de caratula",
+      "status": "finalizado",
+      "version": "1.2.3-rc.2",
+      "git_user": "jperez",
+      "commit_hash": "a1b2c3d4e5f6",
+      "commit_message": "feat(caratula): agrega validación de montos",
+      "release_date": "2026-06-05",
+      "jira_url": "https://pmy.atlassian.net/browse/OCL-1234",
+      "changes": ["src/caratula/validator.ts"]
+    }
+  ],
+  "metrics": [
+    {
+      "version": "1.2.3-rc.1",
+      "release_date": "2026-06-01",
+      "coverage": 72.5,
+      "line_count": 18450,
+      "warnings": 14,
+      "cyclomatic_complexity": 3.8,
+      "code_smells": 22,
+      "duplications": 4.1,
+      "tests_total": 320,
+      "tests_passed": 318
+    }
+  ]
+}
+```
+
+> 📌 `rc_versions` y `metrics` deben ordenarse por fecha de despliegue (más
+> antiguo primero). Los campos de métricas son opcionales; omitir los que no se
+> generen. Detalle completo en **API_DOCUMENTATION.es.md** (sección 6).
+
 ## ⚙️ Configuración Requerida
 
 ### CORS
