@@ -12,6 +12,11 @@ const extractStableVersion = (version?: string | null): string | null => {
   return match ? match[0] : null;
 };
 
+type Stage = 'dev' | 'testing' | 'uat';
+
+// Orden de avance de los ambientes: dev -> testing -> uat
+const STAGE_ORDER: Record<Stage, number> = { dev: 0, testing: 1, uat: 2 };
+
 function App() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [deployments, setDeployments] = useState<Deployment[]>([]);
@@ -23,6 +28,14 @@ function App() {
   const [page, setPage] = useState(1);
   const [hasMore] = useState(true);
   const [pendientesUAT, setPendientesUAT] = useState(false);
+  const [stageFilters, setStageFilters] = useState<Record<Stage, boolean>>({
+    dev: false,
+    testing: false,
+    uat: false,
+  });
+  const toggleStageFilter = useCallback((stage: Stage) => {
+    setStageFilters(prev => ({ ...prev, [stage]: !prev[stage] }));
+  }, []);
   const [detailsMap, setDetailsMap] = useState<Record<string, DeploymentDetail>>({});
   const [loadingDetails, setLoadingDetails] = useState(false);
   const detailSourceRef = useRef<EventSource | null>(null);
@@ -140,15 +153,31 @@ function App() {
     return ['(todas)', ...sorted];
   }, [availableVersions]);
 
-  const developDeployments = filteredDeployments.filter(d => d.stage === 'dev');
-  const uatDeployments = filteredDeployments.filter(d => d.stage === 'uat');
+  // Ambiente más avanzado al que llegó cada ticket (dev < testing < uat)
+  const ticketMaxStage = useMemo(() => {
+    const map = new Map<string, number>();
+    filteredDeployments.forEach(d => {
+      const order = STAGE_ORDER[d.stage];
+      const current = map.get(d.ticket_id);
+      if (current === undefined || order > current) {
+        map.set(d.ticket_id, order);
+      }
+    });
+    return map;
+  }, [filteredDeployments]);
 
-  const uatTicketIds = useMemo(
-    () => new Set(uatDeployments.map(d => d.ticket_id)),
-    [uatDeployments]
+  const developDeployments = filteredDeployments.filter(d =>
+    d.stage === 'dev' &&
+    (!stageFilters.dev || ticketMaxStage.get(d.ticket_id) === STAGE_ORDER.dev)
   );
+  const uatDeployments = filteredDeployments.filter(d =>
+    d.stage === 'uat' &&
+    (!stageFilters.uat || ticketMaxStage.get(d.ticket_id) === STAGE_ORDER.uat)
+  );
+
   const testingDeployments = filteredDeployments.filter(d =>
-    d.stage === 'testing' && (!pendientesUAT || !uatTicketIds.has(d.ticket_id))
+    d.stage === 'testing' &&
+    (!(pendientesUAT || stageFilters.testing) || ticketMaxStage.get(d.ticket_id) === STAGE_ORDER.testing)
   );
 
   const totalDeployments = deployments.length;
@@ -258,18 +287,24 @@ function App() {
             deployments={developDeployments}
             detailsMap={detailsMap}
             loadingDetails={loadingDetails}
+            filterActive={stageFilters.dev}
+            onToggleFilter={() => toggleStageFilter('dev')}
           />
           <StageColumn
             stage="testing"
             deployments={testingDeployments}
             detailsMap={detailsMap}
             loadingDetails={loadingDetails}
+            filterActive={pendientesUAT || stageFilters.testing}
+            onToggleFilter={() => toggleStageFilter('testing')}
           />
           <StageColumn
             stage="uat"
             deployments={uatDeployments}
             detailsMap={detailsMap}
             loadingDetails={loadingDetails}
+            filterActive={stageFilters.uat}
+            onToggleFilter={() => toggleStageFilter('uat')}
           />
         </div>
       </main>
