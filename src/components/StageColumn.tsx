@@ -1,4 +1,4 @@
-import { Code, TestTube, CheckSquare } from 'lucide-react';
+import { Code, TestTube, CheckSquare, Filter } from 'lucide-react';
 import type { Deployment, DeploymentDetail } from '../lib/api';
 import { DeploymentCard } from './DeploymentCard';
 
@@ -7,6 +7,8 @@ interface StageColumnProps {
   deployments: Deployment[];
   detailsMap: Record<string, DeploymentDetail>;
   loadingDetails: boolean;
+  filterActive?: boolean;
+  onToggleFilter?: () => void;
 }
 
 const PENDING_VALUE_TEXT = 'Dato pendiente de carga';
@@ -27,22 +29,25 @@ const stageConfig = {
     icon: Code,
     color: 'bg-blue-500',
     borderColor: 'border-blue-500',
+    filterTitle: 'Mostrar solo tickets que quedaron únicamente en dev',
   },
   testing: {
     title: 'testing',
     icon: TestTube,
     color: 'bg-purple-500',
     borderColor: 'border-purple-500',
+    filterTitle: 'Mostrar solo tickets pendientes de probar en testing (aún no llegaron a UAT)',
   },
   uat: {
     title: 'uat',
     icon: CheckSquare,
     color: 'bg-green-500',
     borderColor: 'border-green-500',
+    filterTitle: 'Mostrar solo tickets cuyo último ambiente es UAT',
   },
 };
 
-export function StageColumn({ stage, deployments, detailsMap, loadingDetails }: StageColumnProps) {
+export function StageColumn({ stage, deployments, detailsMap, loadingDetails, filterActive = false, onToggleFilter }: StageColumnProps) {
   const config = stageConfig[stage];
   const Icon = config.icon;
 
@@ -67,7 +72,23 @@ export function StageColumn({ stage, deployments, detailsMap, loadingDetails }: 
         <div className="flex items-center gap-2">
           <Icon className="w-6 h-6" />
           <h2 className="text-xl font-bold">{config.title}</h2>
-          <span className="ml-auto bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">
+          {onToggleFilter && (
+            <button
+              type="button"
+              onClick={onToggleFilter}
+              aria-pressed={filterActive}
+              title={config.filterTitle}
+              className={`ml-auto flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold transition-colors duration-200 ${
+                filterActive
+                  ? 'bg-white text-gray-900 hover:bg-gray-100'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              Filtrar
+            </button>
+          )}
+          <span className={`${onToggleFilter ? '' : 'ml-auto '}bg-white/20 px-3 py-1 rounded-full text-sm font-semibold`}>
             {uniqueTickets.length}
           </span>
         </div>
